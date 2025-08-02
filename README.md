@@ -26,9 +26,14 @@ Suggests recommended items in a hyper-personalized way.
 
 **Input:** 
 - `user_input`: `str`
+- `cust_info`: `List[Dict[str, Any]]`
+- `top_k`: `int`
 
 **Output:**
-- `ai_recommendation`: `str`
+- `id`: `str`
+- `distance`: `float`
+- `metadata`: `Dict[str, Any]`
+- `document`: `Optional[str] = None`
 
 ### 3. `/upload`
 Handles image upload for product discovery and recommendations.
@@ -37,7 +42,7 @@ Handles image upload for product discovery and recommendations.
 - `image_file`: `file` (supported formats: JPEG, PNG)
 
 **Output:**  
-- `base64_str`: `str`
+- `file_path`: `str`
 
 ### 4. `/health`
 Checks endpoint to confirm the service is running.
