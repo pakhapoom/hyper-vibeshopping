@@ -110,7 +110,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "https://api.hackathon2025.ai.in.th/team09-1",
+					"raw": "https://api.hackathon2025.ai.in.th/team09-1/health",
 					"protocol": "https",
 					"host": [
 						"api",
@@ -120,7 +120,8 @@
 						"th"
 					],
 					"path": [
-						"team09-1"
+						"team09-1",
+						"health"
 					]
 				}
 			},

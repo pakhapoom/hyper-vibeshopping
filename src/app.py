@@ -136,16 +136,16 @@ ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif'}
 def allowed_file(filename: str) -> bool:
     return filename.split('.')[-1].lower() in ALLOWED_EXTENSIONS
 
-@app.post("/upload")
+@app.post("/upload") # TODO: uncomment this
 async def upload_image(image: UploadFile = File(...)):
-    if not allowed_file(image.filename):
-        raise HTTPException(status_code=400, detail="Invalid file type")
+    # if not allowed_file(image.filename):
+    #     raise HTTPException(status_code=400, detail="Invalid file type")
 
     unique_filename = "temp_img.png"
     file_path = os.path.join(UPLOAD_DIR, unique_filename)
 
-    with open(file_path, "wb") as f:
-        f.write(await image.read())
+    # with open(file_path, "wb") as f:
+    #     f.write(await image.read())
 
     return UploadResponse(file_path=file_path)
 
