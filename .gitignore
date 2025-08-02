@@ -11,3 +11,4 @@ wheels/
 .venv
 data/
 chromadb/
+test.py
