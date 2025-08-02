@@ -47,7 +47,7 @@ Checks endpoint to confirm the service is running.
 
 
 ## Postman collection
-Please refer to [this json file](https://gitlab.nectec.or.th/hackathon/ai-thailand-2025/team09/-/blob/main/postman_collection) for the postman collection.
+Please refer to [this json file](https://gitlab.nectec.or.th/hackathon/ai-thailand-2025/team09/-/blob/main/postman_collection.json?ref_type=heads) for the postman collection.
 
 
 ## AI4Thai services
