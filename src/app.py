@@ -1,10 +1,16 @@
+import os
 import base64
 import logging
+from uuid import uuid4
 from typing import Optional, List, Dict, Any
 from fastapi import FastAPI, HTTPException, Body, File, UploadFile
 from pydantic import BaseModel, Field
 from src.service import multimodal_search_service
 from src.modules.login import login
+
+
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 class ImageSearchRequest(BaseModel):
@@ -127,10 +133,28 @@ async def search_by_image_endpoint(request: ImageSearchRequest = Body(...)):
         raise HTTPException(status_code=500, detail="An internal server error occurred.")
 
 
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif'}
+
+def allowed_file(filename: str) -> bool:
+    return filename.split('.')[-1].lower() in ALLOWED_EXTENSIONS
+
 @app.post("/upload")
-async def upload_image(image: UploadRequest):
-    contents = await image.read()
-    base64_str = base64.b64encode(contents).decode('utf-8')
+async def upload_image(image: UploadFile = File(...)):
+    if not allowed_file(image.filename):
+        raise HTTPException(status_code=400, detail="Invalid file type")
+
+    extension = image.filename.split('.')[-1]
+    unique_filename = f"{uuid4().hex}.{extension}"
+    file_path = os.path.join(UPLOAD_DIR, unique_filename)
+
+    with open(file_path, "wb") as f:
+        f.write(await image.read())
+
+    with open(file_path, "rb") as image_file:
+        image_data = image_file.read()
+
+    base64_str = base64.b64encode(image_data).decode("utf-8")
+
     return UploadResponse(base64_str=base64_str)
 
 
