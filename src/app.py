@@ -40,7 +40,7 @@ class LoginResponse(BaseModel):
     cust_info: List[Dict[str, Any]]
     
 class UploadRequest(BaseModel):
-    image: UploadFile
+    image: UploadFile = None
 
 class UploadResponse(BaseModel):
     file_path: str
@@ -137,7 +137,7 @@ def allowed_file(filename: str) -> bool:
     return filename.split('.')[-1].lower() in ALLOWED_EXTENSIONS
 
 @app.post("/upload") # TODO: uncomment this
-async def upload_image(image: UploadFile = File(...)):
+async def upload_image(image: UploadFile = File(None)): # File(...)
     # if not allowed_file(image.filename):
     #     raise HTTPException(status_code=400, detail="Invalid file type")
 
