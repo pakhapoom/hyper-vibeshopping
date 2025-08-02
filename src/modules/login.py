@@ -19,15 +19,15 @@ def login(email: str, password: str) -> Dict[str, Any]:
     db.close()
     
     authentication = False
-    if not result.empty and result.iloc[0]["password"] == password:
+    if not result.empty and (result.iloc[0]["password"] == password) or (result.iloc[0]["password"] == int(password)):
         authentication = True
     
     return {
         "authentication": authentication,
-        "cust_info": result,
+        "cust_info": result.to_dict(orient="records"),
     }
 
 
 if __name__ == "__main__":
     # print(login(email="x", password=1234))
-    print(login(email="oui@aift.in.th", password=1234))
+    print(login(email="oui@aift.in.th", password="1234"))
