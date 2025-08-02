@@ -10,11 +10,5 @@ Hypervibe-shopping is a chat-based application that helps users discover and sho
 - **Multilingual Support:** The application supports both Thai and English, allowing users to interact and receive recommendations in their preferred language.
 
 ## Endpoints
-1. `/login`: Handles user authentication and session management.
-2. `/detect`: Determines input language whether it is Thai or English.
-3. `/translate`: Translates user input to English if it is initially provided in Thai.
-4. `/caption`: Generates descriptive caption for an uploaded image.
-5. `/history`: Retrieves the user's purchase and interaction history.
-6. `/extract`: Extracts key information (user's desire, preferences, and history) from user input.
-7. `/retrieve`: Retrieves recommended items in a hyper-personalized way.
-8. `/summarize`: Summarizes recommendation results.
+1. `/login`: Handles user authentication.
+2. `/chat`: Suggests recommended items in a hyper-personalized way.
