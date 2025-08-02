@@ -33,8 +33,8 @@ class LoginRequest(BaseModel):
 
 class LoginResponse(BaseModel):
     authentication: bool
-    cust_info: Optional[Dict[str, Any]] = None
-
+    cust_info: List[Dict[str, Any]]
+    
 class UploadRequest(BaseModel):
     image: UploadFile
 
