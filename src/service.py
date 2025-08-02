@@ -129,18 +129,19 @@ class multimodal_search_service:
         user_input = self.process_text(user_input)
 
         try:
-            logger.info("Step 1: Decoding base64 image.")
-            image_bytes = base64.b64decode(image_b64)
-            image = Image.open(io.BytesIO(image_bytes))
+            # logger.info("Step 1: Decoding base64 image.")
+            # image_bytes = base64.b64decode(image_b64)
+            # image = Image.open(io.BytesIO(image_bytes))
 
-            logger.info("Step 2: Generating caption for the image...")
-            caption = await generate_caption(image)
-            logger.info(f"  - Generated caption: '{caption}'")
+            # logger.info("Step 2: Generating caption for the image...")
+            # caption = await generate_caption(image)
+            # logger.info(f"  - Generated caption: '{caption}'")
 
-            if not caption:
-                logger.warning("Caption generation failed. Aborting search.")
-                return None
+            # if not caption:
+            #     logger.warning("Caption generation failed. Aborting search.")
+            #     return None
             
+            caption = "Test caption for the image"  # Placeholder for testing
             logger.info("Step 3: Rewriting query based on caption and user input.")
             cust_info = DataFrame(cust_info) if not isinstance(cust_info, DataFrame) else cust_info
             rewrite = self.rewrite_query(
