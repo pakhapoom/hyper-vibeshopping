@@ -12,3 +12,4 @@ wheels/
 data/
 chromadb/
 test.py
+.env
