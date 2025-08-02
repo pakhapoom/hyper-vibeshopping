@@ -48,7 +48,7 @@ def summarize(context: str) -> str:
 class vLLMGenerator:
     def __init__(
         self, 
-        model_name: str = "Qwen/Qwen3-4B",
+        model_name: str = "Qwen/Qwen3-0.6B",
         temperature: float = 0.8,
         top_p: float = 0.95
     ):
@@ -104,3 +104,17 @@ if __name__ == "__main__":
 - Elephant Festival Camp Shirt  Onyx Ivory: This breezy Thai rayon camp-collar shirt bursts with iconic elephant processions and lotus mandalas, designed to sync seamlessly with matching elephant pants for an effortlessly cohesive, culture-rich look. Style Vibe: Island Festival / Boho Street. Fit: Relaxed drape with a boxy cut and soft camp collarideal for layering or wearing open over swimwear. Material: Feather-light 100 % Thai rayoncool, quick-drying, and silky against sun-kissed skin. Care: Machine-wash cold on gentle; hang dry to keep prints crisp and fabric flowing. Matches Well With: Elephant Pantspair with coordinating Thai elephant harem or palazzo pants for a head-to-toe statement set; Footwearleather sandals, espadrilles, or barefoot on the sand; Accessorieswoven straw hat, vintage shades, layered beaded necklaces for festival-ready flair.
 """
     print(summarize(context))
+
+    # vllm
+    print("\n\nvLLM rewrite")
+    vllm_generator = vLLMGenerator()
+    print(vllm_generator.generate(prompt_template["rewrite"].format(
+        user_input=user_input,
+        item_description=item_description,
+        customer_data=customer_data,
+    )))
+
+    print("\n\nvLLM summarize")
+    print(vllm_generator.generate(prompt_template["summarize"].format(
+        context=context,
+    )))
