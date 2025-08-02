@@ -1,0 +1,69 @@
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+
+stages:
+  - build
+  - deploy
+
+services:
+  - docker:dind
+
+before_script:
+  - docker info
+
+build:
+  stage: build
+  image: docker:latest
+  tags:
+    - hackathon-siamai2
+  script:
+    - echo "Building Docker images..."
+    - docker-compose build
+  only:
+    - main
+    - develop
+
+deploy:
+  stage: deploy
+  image: docker:latest
+  tags:
+    - hackathon-siamai1
+  script:
+    - docker info
+    - echo "Creating external network if it doesn't exist..."
+    - docker network create ai4thai_net || true
+    - echo "Stopping existing containers..."
+    - docker-compose down || true
+    - echo "Stopping and removing potentially conflicting containers..."
+    - docker stop hacktron-example-vllm || true
+    - docker rm hacktron-example-vllm || true
+    - docker stop hacktron-example-ollama || true
+    - docker rm hacktron-example-ollama || true
+    - echo "Starting services..."
+    - docker-compose up -d
+    - echo "Waiting for Ollama service to be ready..."
+    - sleep 30
+    - echo "Loading Ollama model..."
+    - chmod +x load_model.sh
+    - ./load_model.sh
+    - echo "Deployment completed successfully"
+    - docker-compose ps
+  only:
+    - main
+  environment:
+    name: production
+    url: http://localhost:7203
+
+cleanup:
+  stage: deploy
+  image: docker:latest
+  tags:
+    - hackathon-siamai1
+  script:
+    - echo "Cleaning up unused Docker resources..."
+    - docker system prune -f
+    - docker volume prune -f
+  when: manual
+  only:
+    - main

@@ -6,6 +6,16 @@ services:
       context: .
       dockerfile: DockerFile
     image: hyper-vibeshopping
-    container_name: hyper-vibe-container
+    container_name: team09-hyper-vibe-shopping
     ports:
-      - "8000:8000"
+      - "1900:8000"
+
+networks:
+  ai4thai_net:
+    external: true
+
+volumes:
+  example-root:
+    external: true
+  example-data:
+    external: true
