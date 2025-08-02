@@ -28,7 +28,7 @@ deploy:
   stage: deploy
   image: docker:latest
   tags:
-    - hackathon-siamai1
+    - hackathon-siamai2
   script:
     - docker info
     - echo "Creating external network if it doesn't exist..."
@@ -53,13 +53,13 @@ deploy:
     - main
   environment:
     name: production
-    url: http://localhost:7203
+    url: http://localhost:1900
 
 cleanup:
   stage: deploy
   image: docker:latest
   tags:
-    - hackathon-siamai1
+    - hackathon-siamai2
   script:
     - echo "Cleaning up unused Docker resources..."
     - docker system prune -f
