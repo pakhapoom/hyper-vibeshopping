@@ -1,8 +1,10 @@
+import base64
 import logging
 from typing import Optional, List, Dict, Any
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Body, File, UploadFile
 from pydantic import BaseModel, Field
 from src.service import multimodal_search_service
+from src.modules.login import login
 
 
 class ImageSearchRequest(BaseModel):
@@ -21,6 +23,22 @@ class ImageSearchResponse(BaseModel):
     """Defines the structure of the API response."""
     results: List[SearchResultItem]
     generated_caption: str
+    summary: str
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class LoginResponse(BaseModel):
+    authentication: bool
+    cust_info: Optional[Dict[str, Any]] = None
+
+class UploadRequest(BaseModel):
+    image: UploadFile
+
+class UploadResponse(BaseModel):
+    base64_str: str
+
 
 # --- FastAPI App Initialization ---
 
@@ -45,9 +63,22 @@ except Exception as e:
     logger.error(f"Fatal error during service initialization: {e}", exc_info=True)
     service = None
 
-# --- API Endpoint ---
 
-@app.post("/search/image", response_model=ImageSearchResponse)
+# --- API Endpoint ---
+@app.post("/login")
+def login_endpoint(request: LoginRequest):
+    result = login(email=request.email, password=request.password)
+
+    if not result["authentication"]:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    return LoginResponse(
+        authentication=result["authentication"], 
+        cust_info=result["cust_info"].to_dict(orient="records") if result["cust_info"] else None
+    )
+
+
+@app.post("/chat", response_model=ImageSearchResponse)
 async def search_by_image_endpoint(request: ImageSearchRequest = Body(...)):
     """
     Accepts a base64 encoded image, generates a caption, and performs a vector search
@@ -58,7 +89,7 @@ async def search_by_image_endpoint(request: ImageSearchRequest = Body(...)):
 
     try:
         # Call the service's search method
-        search_results = await service.search_by_image(image_b64=request.image_b64, top_k=request.top_k)
+        search_results, summary = await service.search_by_image(image_b64=request.image_b64, top_k=request.top_k)
         print(f"Search results: {search_results}")
         if search_results is None:
             raise HTTPException(status_code=404, detail="Could not find any results. The image might not have generated a valid caption.")
@@ -87,11 +118,19 @@ async def search_by_image_endpoint(request: ImageSearchRequest = Body(...)):
                 document=documents[i]
             ))
         
-        return ImageSearchResponse(results=formatted_results, generated_caption=caption)
+        return ImageSearchResponse(results=formatted_results, generated_caption=caption, summary=summary)
 
     except Exception as e:
         logger.error(f"An unexpected error occurred in the search endpoint: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="An internal server error occurred.")
+
+
+@app.post("/upload")
+async def upload_image(image: UploadRequest):
+    contents = await image.read()
+    base64_str = base64.b64encode(contents).decode('utf-8')
+    return UploadResponse(base64_str=base64_str)
+
 
 @app.get("/health")
 def health_check():
