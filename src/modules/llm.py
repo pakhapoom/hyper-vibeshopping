@@ -5,6 +5,8 @@ from aift.nlp import text_sum
 from aift.multimodal import textqa
 from aift.nlp.translation import th2en
 from vllm import LLM, SamplingParams
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 load_dotenv()
@@ -40,24 +42,65 @@ def translate(user_input: str) -> str:
     return res["translated_text"]
 
 def generate(prompt: str) -> str:
-    return textqa.generate(user_input, return_json=False)
+    return textqa.generate(prompt, return_json=False)
 
 def summarize(context: str) -> str:
     return text_sum.summarize(context)
 
-class vLLMGenerator:
+# class vLLMGenerator:
+#     def __init__(
+#         self, 
+#         model_name: str = "Qwen/Qwen3-0.6B",
+#         temperature: float = 0.8,
+#         top_p: float = 0.95,
+#         gpu_memory_utilization: float = 0.85,
+#         max_model_len: int = 39840,
+#     ):
+#         self.llm = LLM(model=model_name, gpu_memory_utilization=gpu_memory_utilization, max_model_len=max_model_len)
+#         self.sampling_params = SamplingParams(temperature=temperature, top_p=top_p)
+
+#     def generate(self, prompt: str) -> str:
+#         outputs = self.llm.generate(prompt, self.sampling_params)
+#         generated_text = outputs[0].outputs[0].text
+#         return generated_text
+
+class TransformersGenerator:
     def __init__(
         self, 
-        model_name: str = "Qwen/Qwen3-0.6B",
-        temperature: float = 0.8,
-        top_p: float = 0.95
+        model_name: str = "Qwen/Qwen3-1.7B",
     ):
-        self.llm = LLM(model=model_name)
-        self.sampling_params = SamplingParams(temperature=temperature, top_p=top_p)
-
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            torch_dtype="auto",
+            device_map="auto"
+        )
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        
     def generate(self, prompt: str) -> str:
-        output = self.llm.generate(prompt, self.sampling_params)
-        return output.outputs[0].text
+        # Use the chat template for better results with instruction-tuned models
+        messages = [
+            {"role": "user", "content": prompt}
+        ]
+        
+        full_prompt = self.tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=False,
+        )
+        
+        model_inputs = self.tokenizer([full_prompt], return_tensors="pt").to(self.device)
+
+        generated_ids = self.model.generate(
+            **model_inputs,
+            max_new_tokens=32768
+        )
+        
+        output_ids = generated_ids[0][len(model_inputs.input_ids[0]):].tolist() 
+        content =self.tokenizer.decode(output_ids, skip_special_tokens=True).strip("\n")
+
+        return content
 
 
 if __name__ == "__main__":
@@ -106,15 +149,15 @@ if __name__ == "__main__":
     print(summarize(context))
 
     # vllm
-    print("\n\nvLLM rewrite")
-    vllm_generator = vLLMGenerator()
-    print(vllm_generator.generate(prompt_template["rewrite"].format(
+    print("\n\nTransformersGenerator generate")
+    transformers_generator = TransformersGenerator()
+    print(transformers_generator.generate(prompt_template["rewrite"].format(
         user_input=user_input,
         item_description=item_description,
         customer_data=customer_data,
     )))
 
-    print("\n\nvLLM summarize")
-    print(vllm_generator.generate(prompt_template["summarize"].format(
+    print("\n\nTransformersGenerator summarize")
+    print(transformers_generator.generate(prompt_template["summarize"].format(
         context=context,
     )))
