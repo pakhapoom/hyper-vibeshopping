@@ -1,7 +1,5 @@
 import os
-import base64
 import logging
-from uuid import uuid4
 from typing import Optional, List, Dict, Any
 from fastapi import FastAPI, HTTPException, Body, File, UploadFile
 from pydantic import BaseModel, Field
@@ -45,7 +43,7 @@ class UploadRequest(BaseModel):
     image: UploadFile
 
 class UploadResponse(BaseModel):
-    base64_str: str
+    file_path: str
 
 
 # --- FastAPI App Initialization ---
@@ -143,19 +141,13 @@ async def upload_image(image: UploadFile = File(...)):
     if not allowed_file(image.filename):
         raise HTTPException(status_code=400, detail="Invalid file type")
 
-    extension = image.filename.split('.')[-1]
-    unique_filename = f"{uuid4().hex}.{extension}"
+    unique_filename = "temp_img.png"
     file_path = os.path.join(UPLOAD_DIR, unique_filename)
 
     with open(file_path, "wb") as f:
         f.write(await image.read())
 
-    with open(file_path, "rb") as image_file:
-        image_data = image_file.read()
-
-    base64_str = base64.b64encode(image_data).decode("utf-8")
-
-    return UploadResponse(base64_str=base64_str)
+    return UploadResponse(file_path=file_path)
 
 
 @app.get("/health")
