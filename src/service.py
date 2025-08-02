@@ -144,6 +144,7 @@ class multimodal_search_service:
                 return None
             
             logger.info("Step 3: Rewriting query based on caption and user input.")
+            cust_info = DataFrame(cust_info) if not isinstance(cust_info, DataFrame) else cust_info
             rewrite = self.rewrite_query(
                 user_input=user_input,
                 caption=caption,
@@ -187,6 +188,7 @@ async def main_test():
     # 1. Initialize the service
     # This will also initialize the embedding model and ChromaDB client.
     service = multimodal_search_service()
+    cust_info = DataFrame([{'customer_id': 2, 'first_name': 'Oui', 'last_name': 'Pakhapoom', 'email': 'oui@aift.in.th', 'password': 1234, 'age': 32, 'occupation': 'businessman', 'address': 'rayong', 'gender': 'M'}])
     
     # 2. Prepare a test image by loading and encoding it to base64
     test_image_path = "data/Image33.png" # Make sure this path is correct
@@ -197,7 +199,7 @@ async def main_test():
         logger.info(f"Successfully loaded and encoded test image: {test_image_path}")
         
         # 3. Call the search method
-        results, summary = await service.search_by_image(image_b64, top_k=3)
+        results, summary = await service.search_by_image(image_b64, cust_info, top_k=3)
         
         # 4. Print the results in a clean format
         if results:
