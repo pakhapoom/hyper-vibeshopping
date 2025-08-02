@@ -9,6 +9,8 @@ from src.modules.login import login
 
 class ImageSearchRequest(BaseModel):
     """Defines the structure of the incoming API request."""
+    user_input: str = Field(..., description="User's input text for search context.")
+    cust_info: List[Dict[str, Any]] = Field(..., description="Customer information for personalized search.")
     image_b64: str = Field(..., description="Base64 encoded string of the image file.")
     top_k: int = Field(5, gt=0, le=20, description="The number of top results to return.")
 
@@ -74,7 +76,7 @@ def login_endpoint(request: LoginRequest):
 
     return LoginResponse(
         authentication=result["authentication"], 
-        cust_info=result["cust_info"].to_dict(orient="records") if result["cust_info"] else None
+        cust_info=result["cust_info"]
     )
 
 
@@ -89,7 +91,7 @@ async def search_by_image_endpoint(request: ImageSearchRequest = Body(...)):
 
     try:
         # Call the service's search method
-        search_results, summary = await service.search_by_image(image_b64=request.image_b64, top_k=request.top_k)
+        search_results, summary = await service.search_by_image(image_b64=request.image_b64, top_k=request.top_k, user_input= request.user_input, cust_info=request.cust_info)
         print(f"Search results: {search_results}")
         if search_results is None:
             raise HTTPException(status_code=404, detail="Could not find any results. The image might not have generated a valid caption.")

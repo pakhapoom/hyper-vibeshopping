@@ -4,7 +4,6 @@ from aift import setting
 from aift.nlp import text_sum
 from aift.multimodal import textqa
 from aift.nlp.translation import th2en
-from vllm import LLM, SamplingParams
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 

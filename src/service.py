@@ -9,7 +9,7 @@ from src.modules.image_caption import generate_caption
 from utils.retrieval import retrieval_documents
 from src.embedding.local_embedding import LocalEmbedddings
 from chromadb import PersistentClient
-from src.modules.llm import translate, generate, summarize, vLLMGenerator, prompt_template
+from src.modules.llm import translate, generate, summarize,prompt_template, TransformersGenerator
 from src.modules.history import get_purchase_history
 
 
@@ -27,13 +27,12 @@ class multimodal_search_service:
         chroma_db_path: str = "./chromadb", 
         collection_name: str = "hypervibe_products",
         embedding_model_name: str = "Qwen/Qwen3-Embedding-0.6B",
-        use_vllm: bool = True,
+        use_transformer: bool = True,
     ):
         logger.info("Initializing multimodal search service...")
         self.chroma_db_path = chroma_db_path
         self.collection_name = collection_name
-        self.use_vllm = use_vllm
-        
+        self.user_transformer = use_transformer 
         # Initialize ChromaDB client and collection
         self.client = PersistentClient(path=self.chroma_db_path)
         self.collection = self.client.get_or_create_collection(name=self.collection_name)
@@ -42,10 +41,9 @@ class multimodal_search_service:
         self.embedding_model = LocalEmbedddings(embedding_model_name)
         logger.info("Service initialized successfully.")
 
-        if self.use_vllm:
-            logger.info("Using vLLM for text generation.")
-            self.vllm_generator = vLLMGenerator()
-
+        if self.user_transformer:
+            logger.info("Using transformer for text generation.")
+            self.transformer_generator = TransformersGenerator()
 
     def check_language(self, user_input: str) -> str:
         """
@@ -89,8 +87,8 @@ class multimodal_search_service:
         cust_info: DataFrame,
     ):
         customer_data = get_purchase_history(cust_info)
-        if self.use_vllm:
-            rewrite = self.vllm_generator.generate(
+        if self.user_transformer:
+            rewrite = self.transformer_generator.generate(
                 prompt_template["rewrite"].format(
                 user_input=user_input,
                 item_description=caption,
@@ -107,8 +105,8 @@ class multimodal_search_service:
     
 
     def generate_answer(self, context: str) -> str:
-        if self.use_vllm:
-            summary = self.vllm_generator.generate(
+        if self.user_transformer:
+            summary = self.transformer_generator.generate(
                 prompt_template["summarize"].format(context=context)
             )
         else:
