@@ -46,6 +46,10 @@ Checks endpoint to confirm the service is running.
 - `health`: `Dict[str, str]`
 
 
+## Postman collection
+Please refer to [this json file](https://gitlab.nectec.or.th/hackathon/ai-thailand-2025/team09/-/blob/main/postman_collection) for the postman collection.
+
+
 ## AI4Thai services
 1. Text generation: use `textqa.generate` to identify language of the user input.
 2. Translation: use `th2en.translate` to translate Thai user input to English.
