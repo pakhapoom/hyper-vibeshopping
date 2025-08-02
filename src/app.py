@@ -1,14 +1,9 @@
 import logging
 from typing import Optional, List, Dict, Any
-
 from fastapi import FastAPI, HTTPException, Body
 from pydantic import BaseModel, Field
+from src.service import multimodal_search_service
 
-# Import the service we created.
-# The heavy models (BLIP-2, embedding model) are loaded once when the service module is imported.
-from service import multimodal_search_service
-
-# --- Pydantic Models for API Request and Response ---
 
 class ImageSearchRequest(BaseModel):
     """Defines the structure of the incoming API request."""

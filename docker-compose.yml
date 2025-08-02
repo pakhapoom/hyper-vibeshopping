@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: DockerFile
+    image: hyper-vibeshopping
+    container_name: hyper-vibe-container
+    ports:
+      - "8000:8000"

@@ -87,6 +87,7 @@ async def main_test():
         
         # 3. Call the search method
         results = await service.search_by_image(image_b64, top_k=3)
+        logger.info(f"Search results: {results}")
         
         # 4. Print the results in a clean format
         if results:
