@@ -11,4 +11,7 @@ dependencies = [
     "torch>=2.7.1",
     "openpyxl>=3.1.5",
     "pandas>=2.3.1",
+    "python-dotenv>=1.1.1",
+    "pip>=25.2",
+    "aift>=1.3.2",
 ]
