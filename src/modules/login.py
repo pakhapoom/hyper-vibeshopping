@@ -19,7 +19,11 @@ def login(email: str, password: str) -> Dict[str, Any]:
     db.close()
     
     authentication = False
-    if not result.empty and (result.iloc[0]["password"] == password) or (result.iloc[0]["password"] == int(password)):
+    try:
+        password = int(password)
+    except:
+        pass
+    if not result.empty and (result.iloc[0]["password"] == password):
         authentication = True
     
     return {
