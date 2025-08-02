@@ -4,28 +4,35 @@ from typing import Dict, Optional, Text
 from PIL import Image
 import io
 import base64
-
+from pandas import DataFrame
 from src.modules.image_caption import generate_caption
 from utils.retrieval import retrieval_documents
 from src.embedding.local_embedding import LocalEmbedddings
 from chromadb import PersistentClient
+from src.modules.llm import translate, generate, summarize, vLLMGenerator, prompt_template
+from src.modules.history import get_purchase_history
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class multimodal_search_service:
     """
     A service for multimodal search that combines image and text retrieval.
     Initializes all necessary models and clients once.
     """
-    def __init__(self, 
-                 chroma_db_path: str = "./chromadb", 
-                 collection_name: str = "hypervibe_products",
-                 embedding_model_name: str = "Qwen/Qwen3-Embedding-0.6B"):
-        
+    def __init__(
+        self, 
+        chroma_db_path: str = "./chromadb", 
+        collection_name: str = "hypervibe_products",
+        embedding_model_name: str = "Qwen/Qwen3-Embedding-0.6B",
+        use_vllm: bool = True,
+    ):
         logger.info("Initializing multimodal search service...")
         self.chroma_db_path = chroma_db_path
         self.collection_name = collection_name
+        self.use_vllm = use_vllm
         
         # Initialize ChromaDB client and collection
         self.client = PersistentClient(path=self.chroma_db_path)
@@ -34,12 +41,95 @@ class multimodal_search_service:
         # Initialize the text embedding model once
         self.embedding_model = LocalEmbedddings(embedding_model_name)
         logger.info("Service initialized successfully.")
-        
-    async def search_by_image(self, image_b64: Text, top_k: int = 5) -> Optional[Dict]:
+
+        if self.use_vllm:
+            logger.info("Using vLLM for text generation.")
+            self.vllm_generator = vLLMGenerator()
+
+
+    def check_language(self, user_input: str) -> str:
+        """
+        Detect the language of the input text.
+
+        Args:
+            user_input (str): The input text to analyze.
+
+        Returns:
+            str: "Thai" or "English" based on the detected language.
+        """
+        return generate(prompt_template["detect"].format(user_input=user_input))
+    
+
+    def process_text(self, user_input: str) -> str:
+        """
+        Main method to handle text processing before RAG.
+
+        Args:
+            user_input (str): The input text to process.
+
+        Returns:
+            str: Clean text to send to LLM.
+        """
+        language = self.check_language(user_input)
+        logger.info(f"Detected language: {language}")
+
+        if language == "Thai":
+            logger.info("Translating Thai text to English...")
+            translated_text = translate(user_input)
+            logger.info(f"Translated text: {translated_text}")
+            return translated_text
+        else:
+            return user_input
+    
+
+    def rewrite_query(
+        self,
+        user_input: str,
+        caption: str,
+        cust_info: DataFrame,
+    ):
+        customer_data = get_purchase_history(cust_info)
+        if self.use_vllm:
+            rewrite = self.vllm_generator.generate(
+                prompt_template["rewrite"].format(
+                user_input=user_input,
+                item_description=caption,
+                customer_data=customer_data,
+            ))
+        else:
+            rewrite = generate(
+                prompt_template["rewrite"].format(
+                user_input=user_input,
+                item_description=caption,
+                customer_data=customer_data,
+            ))
+        return rewrite
+    
+
+    def generate_answer(self, context: str) -> str:
+        if self.use_vllm:
+            summary = self.vllm_generator.generate(
+                prompt_template["summarize"].format(context=context)
+            )
+        else:
+            summary = summarize(context)
+        return summary
+
+
+    async def search_by_image(
+        self,
+        user_input: str,
+        image_b64: Text,
+        cust_info: DataFrame,
+        top_k: int = 5,
+    ) -> Optional[Dict]:
         """
         Performs a search based on an input image by generating a caption
         and using it to query the vector database.
         """
+        logger.info("Step 0: Preparing user input.")
+        user_input = self.process_text(user_input)
+
         try:
             logger.info("Step 1: Decoding base64 image.")
             image_bytes = base64.b64decode(image_b64)
@@ -52,16 +142,35 @@ class multimodal_search_service:
             if not caption:
                 logger.warning("Caption generation failed. Aborting search.")
                 return None
+            
+            logger.info("Step 3: Rewriting query based on caption and user input.")
+            rewrite = self.rewrite_query(
+                user_input=user_input,
+                caption=caption,
+                cust_info=cust_info,
+            )
 
-            logger.info(f"Step 3: Retrieving top {top_k} documents based on caption.")
+            logger.info(f"Step 4: Retrieving top {top_k} documents based on caption.")
             retrieved_results = await retrieval_documents(
-                query_texts=[caption],
+                query_texts=[rewrite],
                 collection=self.collection,
                 embedding_model=self.embedding_model,
                 n_results=top_k 
             )
+
+            logger.info(f"Step 5: Summarizing the recommendation results.")
+            documents = retrieved_results.get('documents', [[]])[0]
+            metadatas = retrieved_results.get('metadatas', [[]])[0]
+
+            context = "Here are recommendation results\n"
+            for i, doc in enumerate(documents):
+                context += f"Result {i+1}:\n"
+                context += f"  - Item name: {metadatas[i]['name']}\n\n"
+                context += f"  - Item description: {doc}\n"
             
-            return retrieved_results
+            summary = self.generate_answer(context)
+
+            return retrieved_results, summary
 
         except base64.binascii.Error as e:
             logger.error(f"Base64 decoding error: {e}. Input may be malformed.")
@@ -69,6 +178,8 @@ class multimodal_search_service:
         except Exception as e:
             logger.error(f"An error occurred during the search_by_image process: {e}", exc_info=True)
             return None
+
+
 async def main_test():
     """Asynchronous main function for testing the service."""
     logger.info("--- Running Service Test ---")
@@ -86,7 +197,7 @@ async def main_test():
         logger.info(f"Successfully loaded and encoded test image: {test_image_path}")
         
         # 3. Call the search method
-        results = await service.search_by_image(image_b64, top_k=3)
+        results, summary = await service.search_by_image(image_b64, top_k=3)
         
         # 4. Print the results in a clean format
         if results:
@@ -104,13 +215,18 @@ async def main_test():
                     print(f"  - Name: {metadatas[i]['name']}")
                     print(f" - Price: {metadatas[i]['price']}")
             print("----------------------\n")
+
         else:
             print("Search returned no results or an error occurred.")
+
+        print("-" * 40)
+        print(f"Summary: {summary}")
 
     except FileNotFoundError:
         logger.error(f"Test image not found at '{test_image_path}'. Please check the path.")
     except Exception as e:
         logger.error(f"An error occurred during the service test: {e}", exc_info=True)
+
 
 if __name__ == "__main__":
     # This allows you to run the test by executing the script directly
