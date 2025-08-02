@@ -1,4 +1,4 @@
-# Hypervibe-shopping
+# team09: Hypervibe-shopping
 
 Hypervibe-shopping is a chat-based application that helps users discover and shop for items tailored to their styles and preferences. Users can interact with the service by sending text queries or attaching images. The system analyzes user input, along with their shopping history stored in our database, to suggest or recommend the most probable next items that match their tastes.
 
