@@ -42,11 +42,11 @@ deploy:
     - docker rm hacktron-example-ollama || true
     - echo "Starting services..."
     - docker-compose up -d
-    - echo "Waiting for Ollama service to be ready..."
-    - sleep 30
-    - echo "Loading Ollama model..."
-    - chmod +x load_model.sh
-    - ./load_model.sh
+    # - echo "Waiting for Ollama service to be ready..."
+    # - sleep 30
+    # - echo "Loading Ollama model..."
+    # - chmod +x load_model.sh
+    # - ./load_model.sh
     - echo "Deployment completed successfully"
     - docker-compose ps
   only:
