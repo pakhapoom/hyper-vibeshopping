@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 # Import the service we created.
 # The heavy models (BLIP-2, embedding model) are loaded once when the service module is imported.
-from src.service import multimodal_search_service
+from services.service import multimodal_search_service
 
 # --- Pydantic Models for API Request and Response ---
 
