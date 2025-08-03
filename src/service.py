@@ -175,7 +175,6 @@ class multimodal_search_service:
                 embedding_model=self.embedding_model,
                 n_results=top_k 
             )
-            
 
             logger.info(f"Step 5: Summarizing the recommendation results.")
             documents = retrieved_results.get('documents', [[]])[0]
