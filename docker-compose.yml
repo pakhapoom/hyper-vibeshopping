@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  app:
   hacktron-example-mq:
     image: rabbitmq:3-management
     container_name: team09-hyper-vibe-hacktron-mq
@@ -18,8 +17,8 @@ services:
 
   hacktron-example-producer:
     build:
-      context: ./producer
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: producer/Dockerfile
     container_name: team09-hyper-vibe-hacktron-producer
     restart: unless-stopped
     ports:
