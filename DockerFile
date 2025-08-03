@@ -1,17 +1,33 @@
-FROM python:3.11-slim 
+# 1. Use a base image with Python and NVIDIA CUDA 12.1
+FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
 
+# 2. Install Python and other essentials
+RUN apt-get update && \
+    apt-get install -y python3.11 python3-pip python3.11-venv curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# 3. Install and use uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
 COPY pyproject.toml uv.lock* ./
+
+# 4. Install PyTorch with CUDA support BEFORE syncing other dependencies
+# This ensures the correct GPU-enabled version is used.
+RUN uv pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu121
+
+# 5. Install the rest of your dependencies
+RUN uv sync --no-deps
+
+# 6. Copy your application files and set up the database
 COPY data/db/cust_info.xlsx ./data/db/cust_info.xlsx
 COPY data/embedded_data.json ./data/embedded_data.json
 COPY utils/set_up_vector_db.py ./utils/set_up_vector_db.py
 
-RUN uv sync
 RUN uv run utils/set_up_vector_db.py
 
 COPY . . 
 
+# 7. Set the command to run your application
 CMD ["uv", "run", "uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8000"]
