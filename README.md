@@ -9,6 +9,8 @@ Hypervibe-shopping is a chat-based application that helps users discover and sho
 - **Preferences Integration:** User demographics as well as purchase history securely stored and leveraged to improve recommendation accuracy.
 - **Personalized Suggestions:** Recommendations are based on both user preferences and historical data.
 
+## High-level architecture
+![High-level architecture](asset/architecture.png)
 
 ## Endpoints
 ### 1. `/login`
@@ -30,13 +32,11 @@ Suggests recommended items in a hyper-personalized way.
 - `top_k`: `int`
 
 **Output:**
-- `id`: `str`
-- `distance`: `float`
-- `metadata`: `Dict[str, Any]`
-- `document`: `Optional[str] = None`
+- `retrieved_results`: `List[Any]`
+- `summary`: `str`
 
 ### 3. `/upload`
-Handles image upload for product discovery and recommendations.
+Handles image upload for product discovery and recommendations (You may need to uplaod an image to test this endpoint. Please refer to `asset/example_img_for_upload_endpoint.png` for an image example.)
 
 **Input:**  
 - `image_file`: `file` (supported formats: JPEG, PNG)
