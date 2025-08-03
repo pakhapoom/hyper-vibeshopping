@@ -56,7 +56,8 @@ class multimodal_search_service:
         Returns:
             str: "Thai" or "English" based on the detected language.
         """
-        return generate(prompt_template["detect"].format(user_input=user_input))
+        # return generate(prompt_template["detect"].format(user_input=user_input))
+        return "English"
     
 
     def process_text(self, user_input: str) -> str:
