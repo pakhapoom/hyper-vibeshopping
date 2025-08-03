@@ -171,6 +171,12 @@ class multimodal_search_service:
                 embedding_model=self.embedding_model,
                 n_results=top_k 
             )
+            updated_list = []
+            for item in retrieved_results:
+                new_item = item.copy()
+                if "metadata" in new_item and "image_url" in new_item["metadata"]:
+                    new_item["metadata"]["image_url"] = "data/" + new_item["metadata"]["image_url"]
+                updated_list.append(new_item)
 
             logger.info(f"Step 5: Summarizing the recommendation results.")
             documents = retrieved_results.get('documents', [[]])[0]
@@ -185,7 +191,7 @@ class multimodal_search_service:
             logger.info("Step 6: Generating final answer based on rewritten query and context.")
             summary = await self.generate_answer(rewrite,context)
 
-            return retrieved_results, summary
+            return updated_list, summary
 
         except base64.binascii.Error as e:
             logger.error(f"Base64 decoding error: {e}. Input may be malformed.")
