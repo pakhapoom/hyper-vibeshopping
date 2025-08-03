@@ -1,397 +1,348 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HyperVibe Shopping</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            color: #333;
-        }
-        .container {
-            width: 100%;
-            max-width: 800px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        #login-view, #chat-view {
-            padding: 40px;
-        }
-        h1, h2 {
-            text-align: center;
-            color: #1c1e21;
-        }
-        .hidden {
-            display: none;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-        input[type="email"], input[type="password"], input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #dddfe2;
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: #1877f2;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #166fe5;
-        }
-        #error-message {
-            color: #fa383e;
-            text-align: center;
-            margin-top: 15px;
-        }
-        #chat-container {
-            display: flex;
-            flex-direction: column;
-            height: 70vh;
-        }
-        #chat-messages {
-            flex-grow: 1;
-            overflow-y: auto;
-            border: 1px solid #dddfe2;
-            border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-        .message {
-            margin-bottom: 15px;
-            display: flex;
-            flex-direction: column;
-        }
-        .message.user {
-            align-items: flex-end;
-        }
-        .message.bot {
-            align-items: flex-start;
-        }
-        .message-content {
-            display: inline-block;
-            padding: 10px 15px;
-            border-radius: 18px;
-            max-width: 80%;
-            word-wrap: break-word;
-        }
-        .message.user .message-content {
-            background-color: #0084ff;
-            color: white;
-        }
-        .message.bot .message-content {
-            background-color: #e4e6eb;
-            color: #050505;
-        }
-        #chat-form {
-            display: flex;
-            gap: 10px;
-        }
-        #chat-form input[type="text"] {
-            flex-grow: 1;
-        }
-        #chat-form button {
-            width: auto;
-            padding: 12px 20px;
-        }
-        #image-upload-label {
-            padding: 12px;
-            background-color: #e4e6eb;
-            border-radius: 50%;
-            cursor: pointer;
-            text-align: center;
-            line-height: 1;
-            font-size: 20px;
-        }
-        #image-preview-container {
-            text-align: left;
-            margin-bottom: 10px;
-            padding-left: 50px;
-        }
-        #image-preview {
-            max-width: 100px;
-            max-height: 100px;
-            border-radius: 6px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-        }
-        .user-image-in-chat {
-            max-width: 150px;
-            border-radius: 12px;
-            display: block;
-            margin-bottom: 8px;
-        }
-        .results-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-            padding: 10px;
-            background: #f7f7f7;
-            border-radius: 12px;
-        }
-        .result-item {
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            padding: 10px;
-            text-align: center;
-            background: white;
-        }
-        .result-item img {
-            max-width: 100%;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 4px;
-        }
-        .result-item p {
-            margin: 5px 0 0;
-            font-size: 14px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HyperVibe Shopping</title>
+
+<!-- Font-Awesome for the profile & cart icons -->
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+      integrity="sha512-00gpS5rH36f3UeKcJrT6S7n0agQS5yXfK9b1cSRApJCccvQIMH0Flp2Yab3a+9XvM5S486xIajlCb04p2e2gHw=="
+      crossorigin="anonymous" referrerpolicy="no-referrer">
+
+<style>
+/* ------------ PAGE LAYOUT -------------------------------------------- */
+body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    margin:0;padding:20px;background:#FDF0E9;color:#333;
+}
+
+/* keep main card on the left so chat (right) never covers it */
+.container{
+    position:relative;                        /* NEW – anchors icon bar */
+    width:100%;max-width:1100px;margin-left:20px;margin-right:auto;
+
+    /* soft fade: white → light-cream */
+    background:linear-gradient(135deg,#FFFFFF 0%,#FEF7F1 100%);
+    border-radius:8px;overflow:hidden;
+    box-shadow:0 4px 12px rgba(0,0,0,.1);
+}
+
+/* ----------- ICON BAR ------------------------------------------------- */
+.top-icons{
+    position:absolute; top:20px; right:25px;
+    display:flex; gap:18px;
+    font-size:1.45rem; color:#555; cursor:pointer; user-select:none;
+}
+.top-icons i:hover{color:#000;}
+
+/* ------------ HEADINGS ------------------------------------------------ */
+h1.big-welcome{
+    font-size:clamp(1.6rem,3vw,2.5rem);
+    font-weight:700;line-height:1.3;margin:0 0 25px 0;
+}
+h2.section-title{margin:0 0 20px 0;font-size:1.3rem;font-weight:600;text-align:left;}
+
+/* ------------ PURCHASE / SUGGESTION GRID ----------------------------- */
+#purchases-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:15px;}
+.purchase-item{border-radius:8px;background:#fff;overflow:hidden;transition:box-shadow .2s;}
+.purchase-item:hover{box-shadow:0 4px 12px rgba(0,0,0,.1);}
+.purchase-item img{width:100%;height:auto;object-fit:contain;}
+
+/* ------------ CHAT WIDGET -------------------------------------------- */
+#chat-widget{
+    position:fixed; bottom:20px; right:20px;
+    width:400px; height:58px;                 /* header height      */
+    border-radius:12px; background:#fff; overflow:hidden;
+    box-shadow:0 5px 15px rgba(0,0,0,.2);
+    transition:all .3s ease-in-out; z-index:1000;
+}
+#chat-widget-header{padding:15px;background:#1877f2;color:#fff;font-weight:600;cursor:pointer;}
+#chat-widget-body{display:none;padding:15px;height:calc(100% - 58px);box-sizing:border-box;display:flex;flex-direction:column;}
+#chat-widget.expanded{height:calc(100vh - 40px); max-height:700px;}
+#chat-widget.expanded #chat-widget-body{display:flex;}
+
+/* ------------ CHAT AREA ---------------------------------------------- */
+#chat-container{display:flex;flex-direction:column;height:100%;}
+#chat-messages{
+    flex:1 1 auto;overflow-y:auto;margin-bottom:15px;padding:15px;
+    border:1px solid #ddd;border-radius:6px;background:#fff;
+}
+.message{margin-bottom:15px;display:flex;flex-direction:column;}
+.message.user{align-items:flex-end;}.message.bot{align-items:flex-start;}
+.message-content{
+    padding:10px 15px;border-radius:18px;max-width:80%;word-wrap:break-word;
+}
+.message.user .message-content{background:#0084ff;color:#fff;}
+.message.bot  .message-content{background:#e4e6eb;color:#050505;}
+
+/* allow image previews from the user */
+.user-image-in-chat{max-width:150px;border-radius:12px;display:block;margin-bottom:8px;}
+
+/* ------------ CHAT INPUT --------------------------------------------- */
+#chat-form{display:flex;gap:10px;flex-shrink:0;}
+#chat-form input[type=text]{flex:1 1 auto;min-width:0;padding:10px;border:1px solid #ddd;border-radius:6px;}
+#chat-form button{padding:0 20px;background:#1877f2;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;}
+#image-upload-label{
+    padding:10px;background:#e4e6eb;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;font-size:20px;user-select:none;
+}
+
+/* ------------ PRODUCT CARDS IN CHAT ---------------------------------- */
+.results-grid{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin-top:15px;
+    padding:10px;background:#f7f7f7;border-radius:12px;
+}
+.result-item{border:1px solid #ddd;border-radius:6px;padding:10px;text-align:center;background:#fff;}
+.result-item img{width:100%;height:120px;object-fit:cover;border-radius:4px;}
+.result-item p{margin:5px 0 0;font-size:14px;}
+</style>
 </head>
+
 <body>
 
-    <div class="container">
-        <!-- Login View -->
-        <div id="login-view">
-            <h1>Welcome to HyperVibe Shopping</h1>
-            <form id="login-form">
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" value="oui@aift.in.th" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" value="1234" required>
-                </div>
-                <button type="submit">Login</button>
-                <p id="error-message" class="hidden"></p>
-            </form>
-        </div>
-
-        <!-- Chat View -->
-        <div id="chat-view" class="hidden">
-            <h2>HyperVibe Assistant</h2>
-            <div id="chat-container">
-                <div id="chat-messages"></div>
-                <div id="image-preview-container" class="hidden">
-                    <img id="image-preview" src="" alt="Image Preview">
-                </div>
-                <form id="chat-form">
-                    <label id="image-upload-label" for="image-upload">📷</label>
-                    <input type="file" id="image-upload" accept="image/*" style="display: none;">
-                    <input type="text" id="user-input" placeholder="Ask about products..." autocomplete="off">
-                    <button type="submit">Send</button>
-                </form>
-            </div>
-        </div>
+<!-- ----------- MAIN CARD --------------------------------------------- -->
+<div class="container" style="padding:40px">
+    
+    <!-- icon bar -->
+    <div class="top-icons">
+        <i class="fa-regular fa-user"        title="My profile"></i>
+        <i class="fa-solid  fa-cart-shopping" title="My cart"></i>
     </div>
 
-    <script>
-        const loginView = document.getElementById('login-view');
-        const chatView = document.getElementById('chat-view');
-        const loginForm = document.getElementById('login-form');
-        const errorMessage = document.getElementById('error-message');
-        const chatForm = document.getElementById('chat-form');
-        const imageUpload = document.getElementById('image-upload');
-        const imagePreviewContainer = document.getElementById('image-preview-container');
-        const imagePreview = document.getElementById('image-preview');
-        const userInput = document.getElementById('user-input');
-        const chatMessages = document.getElementById('chat-messages');
+    <h1 id="welcome-header" class="big-welcome"></h1>
 
-        const API_BASE_URL = 'https://api.hackathon2025.ai.in.th/team09-1';
+    <h2 id="history-heading" class="section-title">Your Previous Purchases</h2>
+    <div id="purchases-grid" style="margin-bottom:40px"></div>
+</div>
 
-        let custInfo = null;
-        let uploadedImageFile = null;
+<!-- ----------- CHAT WIDGET ------------------------------------------- -->
+<div id="chat-widget">
+    <div id="chat-widget-header">HyperVibe&nbsp;Assistant</div>
+    <div id="chat-widget-body">
+        <div id="chat-container">
+            <div id="chat-messages"></div>
 
-        // --- Login Logic ---
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            <!-- image preview is intentionally removed -->
 
-            try {
-                const response = await fetch(`${API_BASE_URL}/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password }),
-                });
+            <form id="chat-form" autocomplete="off">
+                <label id="image-upload-label" for="image-upload">📷</label>
+                <input type="file" id="image-upload" accept="image/*" style="display:none">
+                <input type="text" id="user-input" placeholder="Ask about products...">
+                <button id="send-button" type="submit">Send</button>
+            </form>
+        </div>
+    </div>
+</div>
 
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ detail: 'Invalid credentials' }));
-                    throw new Error(errorData.detail || 'Invalid credentials');
-                }
+<!-- ----------- SCRIPT ------------------------------------------------- -->
+<script>
+/* ===== DOM REFERENCES & GLOBAL STATE ================================= */
+const chatWidget       = document.getElementById("chat-widget");
+const chatWidgetHeader = document.getElementById("chat-widget-header");
+const chatForm         = document.getElementById("chat-form");
+const sendButton       = document.getElementById("send-button");
+const imageUpload      = document.getElementById("image-upload");
+const imageUploadLabel = document.getElementById("image-upload-label");
+const userInput        = document.getElementById("user-input");
+const chatMessages     = document.getElementById("chat-messages");
+const purchasesGrid    = document.getElementById("purchases-grid");
+const historyHeading   = document.getElementById("history-heading");
 
-                const data = await response.json();
-                if (data.authentication) {
-                    custInfo = data.cust_info;
-                    loginView.classList.add('hidden');
-                    chatView.classList.remove('hidden');
-                    const welcomeMessage = `Hello, ${custInfo[0].first_name} ${custInfo[0].last_name || 'there'}! How can I help you find the perfect product today? You can ask me a question and optionally upload a photo.`;
-                    addBotMessage(welcomeMessage);
-                } else {
-                    throw new Error('Authentication failed');
-                }
-            } catch (error) {
-                errorMessage.textContent = error.message;
-                errorMessage.classList.remove('hidden');
+const API_BASE_URL = "https://api.hackathon2025.ai.in.th/team09-1";
+
+let custInfo          = null;
+let uploadedImageFile = null;
+
+/* ===== INITIALISE PAGE =============================================== */
+document.addEventListener("DOMContentLoaded", () => {
+    const stored = sessionStorage.getItem("custInfo");
+    if(!stored){ window.location.href = "./login.html"; return; }
+
+    custInfo = JSON.parse(stored);
+    const first = custInfo[0]?.first_name || "there";
+
+    document.getElementById("welcome-header").innerHTML =
+        `Hi ${first},<br>Welcome back to <strong>HyperVibe Shopping!</strong><br>` +
+        `Glad to see you again — here are your previous purchases:`;
+
+    loadHistoricalPurchases();
+
+    // Add the initial greeting inside the chatbot
+    addBotMessage(`Hi ${first}, what can I get you today?`);
+});
+
+/* ===== CHAT WIDGET TOGGLE ============================================ */
+function expandChat(){ chatWidget.classList.add("expanded"); }
+function collapseChat(){ chatWidget.classList.remove("expanded"); }
+
+chatWidgetHeader.addEventListener("click", () =>
+    chatWidget.classList.contains("expanded") ? collapseChat() : expandChat()
+);
+userInput.addEventListener("focus", expandChat);
+
+/* ===== IMAGE UPLOAD (with preview) =================================== */
+imageUpload.addEventListener("change", e => {
+    if(e.target.files && e.target.files[0]){
+        uploadedImageFile = e.target.files[0];
+        addUserMessage("", uploadedImageFile);
+        expandChat();
+    }
+});
+
+/* ===== CHAT SUBMIT FLOW ============================================== */
+chatForm.addEventListener("submit", async e => {
+    e.preventDefault();
+    const text = userInput.value.trim();
+    if(!text && !uploadedImageFile) return;
+
+    if (uploadedImageFile) {
+        if (text) {
+            const lastMessage = chatMessages.querySelector(".message.user:last-child");
+            if (lastMessage) {
+                const bubble = document.createElement("div");
+                bubble.className = "message-content";
+                bubble.textContent = text;
+                lastMessage.appendChild(bubble);
             }
-        });
+        }
+    } else {
+        addUserMessage(text);
+    }
 
-        // --- Chat Logic ---
-        imageUpload.addEventListener('change', (e) => {
-            if (e.target.files && e.target.files[0]) {
-                uploadedImageFile = e.target.files[0];
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    imagePreview.src = event.target.result;
-                    imagePreviewContainer.classList.remove('hidden');
-                };
-                reader.readAsDataURL(uploadedImageFile);
-            }
-        });
+    const fileToSend = uploadedImageFile;
+    uploadedImageFile = null;
 
-        chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const userText = userInput.value.trim();
-            if (!userText && !uploadedImageFile) return;
+    userInput.value = "";
+    imageUpload.value = "";
+    userInput.focus();
+    sendButton.disabled = true;
 
-            const imageSrcForMessage = uploadedImageFile ? imagePreview.src : null;
-            addUserMessage(userText, imageSrcForMessage);
-            userInput.value = '';
-
-            try {
-                // Step 1: Upload image if it exists
-                if (uploadedImageFile) {
-                    const formData = new FormData();
-                    formData.append('image', uploadedImageFile);
-                    const uploadResponse = await fetch(`${API_BASE_URL}/upload`, {
-                        method: 'POST',
-                        body: formData,
-                    });
-                    if (!uploadResponse.ok) {
-                        throw new Error('Image upload failed');
-                    }
-                }
-
-                // Step 2: Call chat endpoint
-                const chatPayload = {
-                    user_input: userText || "Describe this image and find similar products.",
-                    cust_info: custInfo,
-                    top_k: 2
-                };
-
-                const chatResponse = await fetch(`${API_BASE_URL}/chat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(chatPayload),
-                });
-
-                if (!chatResponse.ok) {
-                    const errorData = await chatResponse.json();
-                    throw new Error(errorData.detail || 'Failed to get chat response');
-                }
-
-                const chatData = await chatResponse.json();
-                const results = chatData.results || [];
-                
-                console.log('Received results:', results); // This will print the results to the console
-
-                addBotMessage(chatData.summary, results);
-
-            } catch (error) {
-                addBotMessage(`Sorry, an error occurred: ${error.message}`);
-            } finally {
-                // Reset image upload after sending
-                uploadedImageFile = null;
-                imageUpload.value = '';
-                imagePreview.src = '';
-                imagePreviewContainer.classList.add('hidden');
-            }
-        });
-
-        function addUserMessage(text, imageSrc) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message user';
-            
-            let content = '';
-            if (imageSrc) {
-                 content += `<img src="${imageSrc}" alt="user upload" class="user-image-in-chat">`;
-            }
-            if (text) {
-                content += `<div class="message-content">${text}</div>`;
-            }
-            
-            messageDiv.innerHTML = content;
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+    try{
+        if(fileToSend){
+            const fd = new FormData();
+            fd.append("image", fileToSend);
+            const upRes = await fetch(`${API_BASE_URL}/upload`, { method:"POST", body:fd });
+            if(!upRes.ok) throw new Error("Image upload failed");
         }
 
-        function addBotMessage(text, results = []) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message bot';
-            
-            const textContent = document.createElement('div');
-            textContent.className = 'message-content';
-            textContent.textContent = text;
-            messageDiv.appendChild(textContent);
+        const payload = {
+            user_input: text || "Describe this image and find similar products.",
+            cust_info : custInfo,
+            top_k     : 4
+        };
 
-            if (results && results.length > 0) {
-                const resultsGrid = document.createElement('div');
-                resultsGrid.className = 'results-grid';
-                results.forEach(item => {
-                    const resultItem = document.createElement('div');
-                    resultItem.className = 'result-item';
-                    
-                    const metadata = item.metadata || {};
-                    let imageUrl;
-                    if (metadata.image_string) {
-                        imageUrl = `data:image/jpeg;base64,${metadata.image_string}`;
-                    } else {
-                        imageUrl = metadata.image_url || 'https://via.placeholder.com/150';
-                    }
-                    const name = metadata.name || 'Unknown Item';
-                    const price = metadata.price ? `${metadata.price}` : 'Price not available';
-                    
-                    resultItem.innerHTML = `
-                        <img src="${imageUrl}" alt="${name}">
-                        <p>${name}</p>
-                        <p><strong>${price}</strong></p>
-                    `;
-                    resultsGrid.appendChild(resultItem);
-                });
-                messageDiv.appendChild(resultsGrid);
-            }
+        const chatRes = await fetch(`${API_BASE_URL}/chat`, {
+            method : "POST",
+            headers: { "Content-Type":"application/json" },
+            body   : JSON.stringify(payload)
+        });
 
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+        if(!chatRes.ok){
+            const errData = await chatRes.json().catch(() => ({}));
+            throw new Error(errData.detail || "Failed to get chat response");
         }
 
-    </script>
+        const data = await chatRes.json();
+        addBotMessage(data.summary, data.results || []);
+
+    }catch(err){
+        addBotMessage(`Sorry, an error occurred: ${err.message}`);
+    }finally{
+        sendButton.disabled = false;
+    }
+});
+
+/* ===== HISTORICAL PURCHASES ========================================== */
+function loadHistoricalPurchases(){
+    const id = custInfo[0]?.customer_id || custInfo[0]?.id || 1;
+    const purchases = {
+        1: ['Image61.png','Image75.png','Image52.png','Image58.png','Image77.png',
+            'Image120.png','Image123.png','Image7.png','Image8.png','Image46.png'],
+        2: ['Image111.png','Image30.png','Image91.png','Image71.png','Image107.png'],
+        3: ['Image9.png','Image32.png','Image3.png','Image5.png','Image18.png',
+            'Image2.png','Image11.png','Image26.png','Image6.png','Image22.png']
+    };
+    replaceGrid(purchases[id] || purchases[1]);
+}
+
+function replaceGrid(files){
+    purchasesGrid.innerHTML = "";
+    const base = "../data/";
+    files.forEach(name => {
+        const card = document.createElement("div");
+        card.className = "purchase-item";
+        card.innerHTML = `<img src="${base}${name}" alt="${name}">`;
+        purchasesGrid.appendChild(card);
+    });
+}
+
+/* ===== DOM HELPERS ==================================================== */
+function addUserMessage(text, imageFile = null){
+    const wrap = document.createElement("div");
+    wrap.className = "message user";
+
+    if (imageFile) {
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(imageFile);
+        img.className = "user-image-in-chat";
+        img.onload = () => URL.revokeObjectURL(img.src);
+        wrap.appendChild(img);
+    }
+
+    if(text){
+        const bubble = document.createElement("div");
+        bubble.className = "message-content";
+        bubble.textContent = text;
+        wrap.appendChild(bubble);
+    }
+
+    if (wrap.hasChildNodes()) {
+        chatMessages.appendChild(wrap);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+}
+
+function addBotMessage(text, results = []){
+    const wrap = document.createElement("div");
+    wrap.className = "message bot";
+
+    if(results.length){
+        const grid   = document.createElement("div");
+        grid.className = "results-grid";
+        const newImgs = [];
+
+        results.forEach(item => {
+            const { metadata = {} } = item;
+            const file  = metadata.image_url || "";
+            const src   = `../data/${file}`;
+            const name  = metadata.name  || "Unknown Item";
+            const price = metadata.price ? `${metadata.price}` : "Price not available";
+
+            grid.innerHTML += `
+              <div class="result-item">
+                <img src="${src}" alt="${name}">
+                <p>${name}</p>
+                <p><strong>${price}</strong></p>
+              </div>`;
+            if(file) newImgs.push(file);
+        });
+        wrap.appendChild(grid);
+
+        document.getElementById("welcome-header").innerHTML = "Hope you like our suggestions!";
+        historyHeading.textContent = "Our Top Picks For You";
+        replaceGrid(newImgs.slice(0,10));
+    }
+
+    const bubble = document.createElement("div");
+    bubble.className = "message-content";
+    bubble.innerHTML = text;
+    wrap.appendChild(bubble);
+
+    chatMessages.appendChild(wrap);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+</script>
 </body>
 </html>

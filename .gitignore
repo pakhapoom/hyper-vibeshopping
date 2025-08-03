@@ -13,3 +13,4 @@ data/
 chromadb/
 test.py
 .env
+test.ipynb
