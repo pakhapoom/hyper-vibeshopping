@@ -106,10 +106,10 @@ class multimodal_search_service:
         return rewrite
     
 
-    def generate_answer(self, context: str) -> str:
+    def generate_answer(self, rewrite:str, context: str) -> str:
         if self.user_transformer:
             summary = self.transformer_generator.generate(
-                prompt_template["summarize"].format(context=context)
+                prompt_template["summarize"].format(rewrite=rewrite,context=context)
             )
         else:
             summary = summarize(context)
@@ -167,8 +167,8 @@ class multimodal_search_service:
                 context += f"  - Item name: {metadatas[i]['name']}\n\n"
                 context += f"  - Item description: {doc}\n"
             
-            logger.info(f"Context for summarization: {context}")
-            summary = self.generate_answer(context)
+            logger.info("Step 6: Generating final answer based on rewritten query and context.")
+            summary = self.generate_answer(rewrite,context)
 
             return retrieved_results, summary
 
