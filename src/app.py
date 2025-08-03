@@ -28,7 +28,7 @@ class SearchResultItem(BaseModel):
 class ImageSearchResponse(BaseModel):
     """Defines the structure of the API response."""
     results: List[SearchResultItem]
-    generated_caption: str
+    # generated_caption: str
     summary: str
 
 class LoginRequest(BaseModel):
@@ -95,7 +95,11 @@ async def search_by_image_endpoint(request: ImageSearchRequest = Body(...)):
 
     try:
         # Call the service's search method
-        search_results, summary = await service.search_by_image(image_b64="", top_k=request.top_k, user_input= request.user_input, cust_info=request.cust_info)
+        search_results, summary = await service.search_by_image(
+            top_k=request.top_k, 
+            user_input= request.user_input, 
+            cust_info=request.cust_info,
+        )
         print(f"Search results: {search_results}")
         if search_results is None:
             raise HTTPException(status_code=404, detail="Could not find any results. The image might not have generated a valid caption.")
@@ -108,7 +112,7 @@ async def search_by_image_endpoint(request: ImageSearchRequest = Body(...)):
         # image_bytes = base64.b64decode(request.image_b64)
         # image = Image.open(io.BytesIO(image_bytes))
         # caption = await generate_caption(image)
-        caption = "test"
+        # caption = "test"
         # Format the raw ChromaDB results into our Pydantic response model
         formatted_results = []
         ids = search_results.get('ids', [[]])[0]
@@ -124,7 +128,7 @@ async def search_by_image_endpoint(request: ImageSearchRequest = Body(...)):
                 document=documents[i]
             ))
         
-        return ImageSearchResponse(results=formatted_results, generated_caption=caption, summary=summary)
+        return ImageSearchResponse(results=formatted_results, summary=summary)
 
     except Exception as e:
         logger.error(f"An unexpected error occurred in the search endpoint: {e}", exc_info=True)

@@ -15,6 +15,7 @@ from src.modules.history import get_purchase_history
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+img_path = "uploads/temp_img.png"
 
 
 class multimodal_search_service:
@@ -117,7 +118,6 @@ class multimodal_search_service:
     async def search_by_image(
         self,
         user_input: str,
-        image_b64: Text,
         cust_info: DataFrame,
         top_k: int = 5,
     ) -> Optional[Dict]:
@@ -129,17 +129,18 @@ class multimodal_search_service:
         user_input = self.process_text(user_input)
 
         try:
-            # logger.info("Step 1: Decoding base64 image.")
+            logger.info("Step 1: Getting the uploaded image.")
             # image_bytes = base64.b64decode(image_b64)
             # image = Image.open(io.BytesIO(image_bytes))
+            image = Image.open(img_path)
 
-            # logger.info("Step 2: Generating caption for the image...")
-            # caption = await generate_caption(image)
-            # logger.info(f"  - Generated caption: '{caption}'")
+            logger.info("Step 2: Generating caption for the image...")
+            caption = await generate_caption(image)
+            logger.info(f"  - Generated caption: '{caption}'")
 
-            # if not caption:
-            #     logger.warning("Caption generation failed. Aborting search.")
-            #     return None
+            if not caption:
+                logger.warning("Caption generation failed. Aborting search.")
+                return None
             
             caption = "Test caption for the image"  # Placeholder for testing
             logger.info("Step 3: Rewriting query based on caption and user input.")
