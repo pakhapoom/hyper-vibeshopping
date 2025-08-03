@@ -132,7 +132,7 @@ async def summarize(context: str) -> str:
 class TransformersGenerator:
     def __init__(
         self, 
-        model_name: str = "Qwen/Qwen3-4B",
+        model_name: str = "Qwen/Qwen3-1.7B",
     ):
         self.device = "cuda"
         self.model = AutoModelForCausalLM.from_pretrained(
