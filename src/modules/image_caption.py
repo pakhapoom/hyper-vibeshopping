@@ -14,7 +14,7 @@ try:
     logger.info("Loading BLIP-2 model and processor into memory...")
     PROCESSOR = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b")
     MODEL = Blip2ForConditionalGeneration.from_pretrained(
-        "Salesforce/blip2-opt-2.7b", device_map="auto"
+        "Salesforce/blip2-opt-2.7b", device_map="auto", torch_dtype=torch.float16,
     )
     logger.info("BLIP-2 model and processor loaded successfully.")
 except Exception as e:
