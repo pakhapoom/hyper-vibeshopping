@@ -5,188 +5,82 @@ import requests
 import logging
 import time
 from datetime import datetime
+import uuid
+from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, Field
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def get_rabbitmq_connection():
-    rabbitmq_host = os.getenv('RABBITMQ_HOST', 'localhost')
-    rabbitmq_port = int(os.getenv('RABBITMQ_PORT', 5672))
-    rabbitmq_user = os.getenv('RABBITMQ_USER', 'admin')
-    rabbitmq_pass = os.getenv('RABBITMQ_PASS', 'password123')
-    
-    credentials = pika.PlainCredentials(rabbitmq_user, rabbitmq_pass)
-    parameters = pika.ConnectionParameters(
-        host=rabbitmq_host,
-        port=rabbitmq_port,
-        credentials=credentials,
-        heartbeat=600,
-        blocked_connection_timeout=300
-    )
-    return pika.BlockingConnection(parameters)
 
-def call_ollama(endpoint, method, headers, body, query_params=None):
-    """Make actual HTTP request to Ollama service"""
-    ollama_host = os.getenv('OLLAMA_HOST', 'localhost')
-    ollama_port = os.getenv('OLLAMA_PORT', '11434')
-    
-    # Build URL
-    url = f"http://{ollama_host}:{ollama_port}{endpoint}"
-    if query_params:
-        url += f"?{query_params}"
-    
-    # Clean headers (remove connection-specific headers)
-    clean_headers = {
-        key: value for key, value in headers.items()
-        if key.lower() not in ['host', 'content-length', 'connection', 'accept-encoding']
-    } if headers else {}
-    
-    try:
-        logger.info(f"Making {method} request to {url}")
-        logger.info(f"Request body to Ollama: {body}")
-        logger.info(f"Request headers to Ollama: {clean_headers}")
-        
-        # Parse JSON body if Content-Type is application/json
-        json_data = None
-        if body and clean_headers.get('content-type', '').lower() == 'application/json':
-            try:
-                json_data = json.loads(body)
-                body = None  # Use json parameter instead of data
-                logger.info(f"Parsed JSON data: {json_data}")
-            except json.JSONDecodeError as e:
-                logger.warning(f"Failed to parse JSON body: {e}, using as string")
-        
-        # Make the request
-        if method.upper() == 'GET':
-            response = requests.get(url, headers=clean_headers, timeout=300)
-        elif method.upper() == 'POST':
-            if json_data:
-                response = requests.post(url, json=json_data, headers=clean_headers, timeout=300)
-            else:
-                response = requests.post(url, data=body, headers=clean_headers, timeout=300)
-        elif method.upper() == 'PUT':
-            if json_data:
-                response = requests.put(url, json=json_data, headers=clean_headers, timeout=300)
-            else:
-                response = requests.put(url, data=body, headers=clean_headers, timeout=300)
-        elif method.upper() == 'DELETE':
-            response = requests.delete(url, headers=clean_headers, timeout=300)
-        elif method.upper() == 'PATCH':
-            if json_data:
-                response = requests.patch(url, json=json_data, headers=clean_headers, timeout=300)
-            else:
-                response = requests.patch(url, data=body, headers=clean_headers, timeout=300)
-        else:
-            if json_data:
-                response = requests.request(method, url, json=json_data, headers=clean_headers, timeout=300)
-            else:
-                response = requests.request(method, url, data=body, headers=clean_headers, timeout=300)
-        
-        response.raise_for_status()
-        
-        # Try to parse as JSON, fallback to text
-        try:
-            response_data = response.json()
-        except:
-            response_data = {"response": response.text}
-            
-        return {
-            "status": "success",
-            "status_code": response.status_code,
-            "response": response_data
-        }
-    
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Error calling Ollama {endpoint}: {e}")
-        
-        # Log response details if available
-        if hasattr(e, 'response') and e.response is not None:
-            logger.error(f"Ollama response status: {e.response.status_code}")
-            try:
-                logger.error(f"Ollama response body: {e.response.text}")
-            except:
-                logger.error("Could not read response body")
-        
-        return {
-            "status": "error",
-            "status_code": 500,
-            "error": str(e)
-        }
+class ImageSearchRequest(BaseModel):
+    """Defines the structure of the incoming API request."""
+    user_input: str = Field(..., description="User's input text for search context.")
+    cust_info: List[Dict[str, Any]] = Field(..., description="Customer information for personalized search.")
+    top_k: int = Field(5, gt=0, le=20, description="The number of top results to return.")
 
-def process_rpc_request(ch, method, properties, body):
-    """Process RPC request and send response back"""
-    try:
-        request_data = json.loads(body)
+
+class ChatRpcClient(object):
+
+    def __init__(self):
+        self.connect()
+
+    def connect(self, queue_name="rpc_queue"):
+        rabbitmq_host = os.getenv('RABBITMQ_HOST', 'localhost')
+        rabbitmq_port = int(os.getenv('RABBITMQ_PORT', 5672))
+        rabbitmq_user = os.getenv('RABBITMQ_USER', 'admin')
+        rabbitmq_pass = os.getenv('RABBITMQ_PASS', 'password123')
         
-        endpoint = request_data.get('endpoint', '/')
-        http_method = request_data.get('method', 'GET')
-        headers = request_data.get('headers', {})
-        request_body = request_data.get('body')
-        query_params = request_data.get('query_params')
-        
-        logger.info(f"Processing RPC request: {http_method} {endpoint}")
-        logger.info(f"Received from RabbitMQ: {json.dumps(request_data, indent=2)}")
-        
-        # Call Ollama service
-        result = call_ollama(endpoint, http_method, headers, request_body, query_params)
-        
-        logger.info(f"Ollama response status: {result.get('status')}")
-        
-        # Send response back to the reply_to queue
-        ch.basic_publish(
-            exchange='',
-            routing_key=properties.reply_to,
-            properties=pika.BasicProperties(
-                correlation_id=properties.correlation_id
-            ),
-            body=json.dumps(result)
+        credentials = pika.PlainCredentials(rabbitmq_user, rabbitmq_pass)
+        parameters = pika.ConnectionParameters(
+            host=rabbitmq_host,
+            port=rabbitmq_port,
+            credentials=credentials,
+            heartbeat=600,
+            blocked_connection_timeout=300,
         )
-        
-        # Acknowledge the message
-        ch.basic_ack(delivery_tag=method.delivery_tag)
-        
-        logger.info(f"RPC response sent with correlation_id: {properties.correlation_id}")
-        
-    except Exception as e:
-        logger.error(f"Error processing RPC request: {e}")
-        
-        # Send error response
-        error_response = {
-            "status": "error",
-            "status_code": 500,
-            "error": str(e)
-        }
-        
-        try:
-            ch.basic_publish(
-                exchange='',
-                routing_key=properties.reply_to,
-                properties=pika.BasicProperties(
-                    correlation_id=properties.correlation_id
-                ),
-                body=json.dumps(error_response)
-            )
-        except Exception as send_error:
-            logger.error(f"Failed to send error response: {send_error}")
-        
-        # Acknowledge the message even on error to prevent redelivery
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self.connection = pika.BlockingConnection(parameters)
+        self.channel = self.connection.channel()
+        result = self.channel.queue_declare(queue=queue_name, exclusive=True)
+        self.callback_queue = result.method.queue
+        self.channel.basic_consume(
+            queue=self.callback_queue,
+            on_message_callback=self.on_response,
+            auto_ack=True)
+
+        self.response = None
+        self.corr_id = None
+
+    def on_response(self, ch, method, props, body):
+        if self.corr_id == props.correlation_id:
+            self.response = body
+
+    def call(self, user_input, cust_info, top_k):
+        self.response = None
+        self.corr_id = str(uuid.uuid4())
+        self.channel.basic_publish(
+            exchange='',
+            routing_key='rpc_queue',
+            properties=pika.BasicProperties(
+                reply_to=self.callback_queue,
+                correlation_id=self.corr_id,
+            ),
+            body=ImageSearchRequest(
+                user_input=user_input,
+                cust_info=cust_info,
+                top_k=top_k
+            ))
+        while self.response is None:
+            self.connection.process_data_events(time_limit=None)
+        return int(self.response)
+
 
 def main():
     logger.info("Starting Hacktron Example RPC Consumer")
-    
-    # Wait for RabbitMQ to be ready
-    while True:
-        try:
-            connection = get_rabbitmq_connection()
-            break
-        except Exception as e:
-            logger.error(f"Failed to connect to RabbitMQ: {e}")
-            logger.info("Retrying in 5 seconds...")
-            time.sleep(5)
-    
     try:
-        channel = connection.channel()
+        chat_rpc = ChatRpcClient()
+        channel = chat_rpc.connection.channel()
         
         # Declare the RPC queue
         channel.queue_declare(queue='rpc_queue', durable=True)
@@ -206,12 +100,13 @@ def main():
     except KeyboardInterrupt:
         logger.info("RPC Consumer interrupted by user")
         channel.stop_consuming()
-        connection.close()
+        chat_rpc.connection.close()
     except Exception as e:
         logger.error(f"RPC Consumer error: {e}")
     finally:
-        if connection and not connection.is_closed:
-            connection.close()
+        if chat_rpc.connection and not chat_rpc.connection.is_closed:
+            chat_rpc.connection.close()
+
 
 if __name__ == "__main__":
     main()
