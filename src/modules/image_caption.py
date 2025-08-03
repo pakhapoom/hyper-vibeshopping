@@ -12,12 +12,17 @@ PROCESSOR = None
 MODEL = None
 try:
     logger.info("Loading BLIP-2 model and processor into memory...")
-    
+    quantization_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_use_double_quant=True,
+        bnb_4bit_compute_dtype=torch.float16,
+    )
     device = "cuda" 
     PROCESSOR = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b", use_fast=True)
     MODEL = Blip2ForConditionalGeneration.from_pretrained(
         "Salesforce/blip2-opt-2.7b", device_map=device, torch_dtype=torch.float16,
-        
+        quantization_config=quantization_config   
     )
     logger.info("BLIP-2 model and processor loaded successfully.")
 except Exception as e:
