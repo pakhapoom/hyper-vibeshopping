@@ -1,3 +1,4 @@
+import torch
 from sentence_transformers import SentenceTransformer 
 from tqdm import tqdm
 
@@ -7,7 +8,8 @@ class LocalEmbedddings:
         """
         Initializes the LocalEmbedddings class with a specified model name.
         """
-        self.model = SentenceTransformer(model_name, device='cuda')
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.model = SentenceTransformer(model_name, device=device)
     
     def encode_documents(self, documents, batch_size=32):
         """
