@@ -131,7 +131,9 @@ class multimodal_search_service:
 
         try:
             logger.info("Step 1: Getting the uploaded image.")
-            image = Image.open(img_path)
+            # image = Image.open(img_path)
+            with open(img_path, "rb") as f:
+                image = f.read()
 
             logger.info("Step 2: Generating caption for the image...")
             caption = await generate_caption(image)
