@@ -1,7 +1,7 @@
 import asyncio
 import logging 
 from PIL import Image 
-from transformers import Blip2Processor, Blip2ForConditionalGeneration
+from transformers import Blip2Processor, Blip2ForConditionalGeneration, BitsAndBytesConfig
 import torch
 
 # Configure logging
@@ -12,6 +12,11 @@ PROCESSOR = None
 MODEL = None
 try:
     logger.info("Loading BLIP-2 model and processor into memory...")
+    quantization_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.float16
+    )
     PROCESSOR = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b")
     MODEL = Blip2ForConditionalGeneration.from_pretrained(
         "Salesforce/blip2-opt-2.7b", torch_dtype=torch.float16, device_map="auto"
