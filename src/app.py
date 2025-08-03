@@ -15,7 +15,6 @@ class ImageSearchRequest(BaseModel):
     """Defines the structure of the incoming API request."""
     user_input: str = Field(..., description="User's input text for search context.")
     cust_info: List[Dict[str, Any]] = Field(..., description="Customer information for personalized search.")
-    #image_b64: str = Field(..., description="Base64 encoded string of the image file.")
     top_k: int = Field(5, gt=0, le=20, description="The number of top results to return.")
 
 class SearchResultItem(BaseModel):
