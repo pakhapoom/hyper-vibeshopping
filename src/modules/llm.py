@@ -113,7 +113,7 @@ def summarize(context: str) -> str:
 class TransformersGenerator:
     def __init__(
         self, 
-        model_name: str = "Qwen/Qwen3-1.7B",
+        model_name: str = "Qwen/Qwen3-0.6B",
     ):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = AutoModelForCausalLM.from_pretrained(
