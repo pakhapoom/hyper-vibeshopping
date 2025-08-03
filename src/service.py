@@ -68,10 +68,10 @@ class multimodal_search_service:
             str: "Thai" or "English" based on the detected language.
         """
         try:
-            return await generate(prompt_template["detect"].format(user_input=user_input))
-        except:
             return self._check(user_input)
-    
+        except:
+            return await generate(prompt_template["detect"].format(user_input=user_input))
+            
 
     async def process_text(self, user_input: str) -> str:
         """
