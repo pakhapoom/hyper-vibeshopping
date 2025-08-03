@@ -12,6 +12,7 @@ from src.embedding.local_embedding import LocalEmbedddings
 from chromadb import PersistentClient
 from src.modules.llm import translate, generate, summarize,prompt_template, TransformersGenerator
 from src.modules.history import get_purchase_history
+import os
 
 
 logging.basicConfig(level=logging.INFO)
@@ -144,17 +145,20 @@ class multimodal_search_service:
         try:
             logger.info("Step 1: Getting the uploaded image.")
             # image = Image.open(img_path)
-            with open(img_path, "rb") as f:
-                png_data = f.read()
-            image = Image.open(io.BytesIO(png_data))
+            try:
+                with open(img_path, "rb") as f:
+                    png_data = f.read()
+                image = Image.open(io.BytesIO(png_data))
 
-            logger.info("Step 2: Generating caption for the image...")
-            caption = await generate_caption(image)
+                logger.info("Step 2: Generating caption for the image...")
+                caption = await generate_caption(image)
+            except:
+                caption = None
             logger.info(f"- Generated caption: '{caption}'")
 
             if not caption:
                 logger.warning("Caption generation failed. Aborting search.")
-                return None
+                caption = ""
             
             logger.info("Step 3: Rewriting query based on caption and user input.")
             cust_info = DataFrame(cust_info) if not isinstance(cust_info, DataFrame) else cust_info
@@ -184,6 +188,13 @@ class multimodal_search_service:
             
             logger.info("Step 6: Generating final answer based on rewritten query and context.")
             summary = await self.generate_answer(rewrite,context)
+
+            if os.path.exists(img_path):
+                try:
+                    os.remove(img_path)
+                    logger.info(f"Deleted existing image at {img_path}")
+                except Exception as e:
+                    logger.warning(f"Could not delete {img_path}: {e}")
 
             return retrieved_results, summary
 
