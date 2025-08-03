@@ -167,6 +167,7 @@ class multimodal_search_service:
                 context += f"  - Item name: {metadatas[i]['name']}\n\n"
                 context += f"  - Item description: {doc}\n"
             
+            logger.info(f"Context for summarization: {context}")
             summary = self.generate_answer(context)
 
             return retrieved_results, summary
