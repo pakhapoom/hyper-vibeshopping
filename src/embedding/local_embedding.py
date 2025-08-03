@@ -7,7 +7,7 @@ class LocalEmbedddings:
         """
         Initializes the LocalEmbedddings class with a specified model name.
         """
-        self.model = SentenceTransformer(model_name)
+        self.model = SentenceTransformer(model_name, device='cuda')
     
     def encode_documents(self, documents, batch_size=32):
         """

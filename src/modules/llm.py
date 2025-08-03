@@ -137,7 +137,7 @@ class TransformersGenerator:
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name,
             torch_dtype="auto",
-            device_map="auto"
+            device_map=self.device,
         )
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         
