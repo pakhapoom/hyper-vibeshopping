@@ -24,10 +24,6 @@ Language: Thai
 Input: Can you recommend some clothes similar to those in the picture?
 Language: English
 
-# Examples 3
-Input: ฉันต้องการซื้อเสื้อผ้าใหม่
-Language: Thai
-    
 Input: {user_input}
 Language: 
 """,
@@ -155,7 +151,7 @@ class TransformersGenerator:
 
 if __name__ == "__main__":
 
-    test_module = "summarize_tfm"  # Options: detect, translate, rewrite, summarize, rewrite_tfm, summarize_tfm
+    test_module = "detect"  # Options: detect, translate, rewrite, summarize, rewrite_tfm, summarize_tfm
 
     # inputs
     user_input = "ช่วยแนะนำเสื้อผ้าเหมือนในรูปให้หน่อย"
