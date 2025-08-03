@@ -12,6 +12,7 @@ from src.embedding.local_embedding import LocalEmbedddings
 from chromadb import PersistentClient
 from src.modules.llm import translate, generate, summarize,prompt_template, TransformersGenerator
 from src.modules.history import get_purchase_history
+import os
 
 
 logging.basicConfig(level=logging.INFO)
@@ -56,7 +57,7 @@ class multimodal_search_service:
             return "Thai"
 
 
-    def check_language(self, user_input: str) -> str:
+    async def check_language(self, user_input: str) -> str:
         """
         Detect the language of the input text.
 
@@ -67,12 +68,12 @@ class multimodal_search_service:
             str: "Thai" or "English" based on the detected language.
         """
         try:
-            return generate(prompt_template["detect"].format(user_input=user_input))
-        except:
             return self._check(user_input)
-    
+        except:
+            return await generate(prompt_template["detect"].format(user_input=user_input))
+            
 
-    def process_text(self, user_input: str) -> str:
+    async def process_text(self, user_input: str) -> str:
         """
         Main method to handle text processing before RAG.
 
@@ -82,19 +83,19 @@ class multimodal_search_service:
         Returns:
             str: Clean text to send to LLM.
         """
-        language = self.check_language(user_input)
+        language = await self.check_language(user_input)
         logger.info(f"Detected language: {language}")
 
         if language == "Thai":
             logger.info("Translating Thai text to English...")
-            translated_text = translate(user_input)
+            translated_text = await translate(user_input)
             logger.info(f"Translated text: {translated_text}")
             return translated_text
         else:
             return user_input
     
 
-    def rewrite_query(
+    async def rewrite_query(
         self,
         user_input: str,
         caption: str,
@@ -102,14 +103,14 @@ class multimodal_search_service:
     ):
         customer_data = get_purchase_history(cust_info)
         if self.user_transformer:
-            rewrite = self.transformer_generator.generate(
+            rewrite = await self.transformer_generator.generate(
                 prompt_template["rewrite"].format(
                 user_input=user_input,
                 item_description=caption,
                 customer_data=customer_data,
             ))
         else:
-            rewrite = generate(
+            rewrite = await generate(
                 prompt_template["rewrite"].format(
                 user_input=user_input,
                 item_description=caption,
@@ -118,13 +119,13 @@ class multimodal_search_service:
         return rewrite
     
 
-    def generate_answer(self, rewrite:str, context: str) -> str:
+    async def generate_answer(self, rewrite:str, context: str) -> str:
         if self.user_transformer:
-            summary = self.transformer_generator.generate(
+            summary = await self.transformer_generator.generate(
                 prompt_template["summarize"].format(rewrite=rewrite,context=context)
             )
         else:
-            summary = summarize(context)
+            summary = await summarize(context)
         return summary
 
 
@@ -139,26 +140,29 @@ class multimodal_search_service:
         and using it to query the vector database.
         """
         logger.info("Step 0: Preparing user input.")
-        user_input = self.process_text(user_input)
+        user_input = await self.process_text(user_input)
 
         try:
             logger.info("Step 1: Getting the uploaded image.")
             # image = Image.open(img_path)
-            with open(img_path, "rb") as f:
-                png_data = f.read()
-            image = Image.open(io.BytesIO(png_data))
+            try:
+                with open(img_path, "rb") as f:
+                    png_data = f.read()
+                image = Image.open(io.BytesIO(png_data))
 
-            logger.info("Step 2: Generating caption for the image...")
-            caption = await generate_caption(image)
+                logger.info("Step 2: Generating caption for the image...")
+                caption = await generate_caption(image)
+            except:
+                caption = None
             logger.info(f"- Generated caption: '{caption}'")
 
             if not caption:
                 logger.warning("Caption generation failed. Aborting search.")
-                return None
+                caption = ""
             
             logger.info("Step 3: Rewriting query based on caption and user input.")
             cust_info = DataFrame(cust_info) if not isinstance(cust_info, DataFrame) else cust_info
-            rewrite = self.rewrite_query(
+            rewrite = await self.rewrite_query(
                 user_input=user_input,
                 caption=caption,
                 cust_info=cust_info,
@@ -171,6 +175,12 @@ class multimodal_search_service:
                 embedding_model=self.embedding_model,
                 n_results=top_k 
             )
+            updated_list = []
+            for item in retrieved_results:
+                new_item = item.copy()
+                if "metadata" in new_item and "image_url" in new_item["metadata"]:
+                    new_item["metadata"]["image_url"] = "data/" + new_item["metadata"]["image_url"]
+                updated_list.append(new_item)
 
             logger.info(f"Step 5: Summarizing the recommendation results.")
             documents = retrieved_results.get('documents', [[]])[0]
@@ -183,9 +193,9 @@ class multimodal_search_service:
                 context += f"  - Item description: {doc}\n"
             
             logger.info("Step 6: Generating final answer based on rewritten query and context.")
-            summary = self.generate_answer(rewrite,context)
+            summary = await self.generate_answer(rewrite,context)
 
-            return retrieved_results, summary
+            return updated_list, summary
 
         except base64.binascii.Error as e:
             logger.error(f"Base64 decoding error: {e}. Input may be malformed.")

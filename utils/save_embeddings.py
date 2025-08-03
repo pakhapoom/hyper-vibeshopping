@@ -17,7 +17,7 @@ def save_embeddings_to_file(csv_path, json_path, model_name):
     df['embedding'] = [embedding.tolist() for embedding in embeddings]
 
     # 4. Select the desired columns
-    output_df = df[['name', 'description', 'price', 'embedding', 'image_string']]
+    output_df = df[['name', 'description', 'price', 'embedding', 'imageUrl']]
 
         # 5. Save the DataFrame to a JSON file
     output_df.to_json(json_path, orient='records', indent=4)
@@ -25,7 +25,7 @@ def save_embeddings_to_file(csv_path, json_path, model_name):
     print(f"Successfully saved embedded data to {json_path}")
     
 if __name__ == "__main__":
-    csv_path = "data/data_with_base64.csv"
+    csv_path = "data/data.csv"
     json_path = "data/embedded_data.json"
     model_name = "Qwen/Qwen3-Embedding-0.6B"
     save_embeddings_to_file(csv_path, json_path, model_name)

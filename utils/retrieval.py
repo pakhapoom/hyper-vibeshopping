@@ -60,7 +60,7 @@ async def main_test():
     results = await retrieval_documents([query], collection, embedding_model, n_results=3)
     
     # print(f"Query: '{query}'")
-    # for doc in results['metadata'][0]:
+    # for doc in results['metadatas'][0]:
     #     print(f"Document: {doc}")
         
 
