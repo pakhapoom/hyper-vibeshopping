@@ -2,13 +2,55 @@ version: '3.8'
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: DockerFile
-    image: hyper-vibeshopping
-    container_name: team09-hyper-vibe-shopping
+  hacktron-example-mq:
+    image: rabbitmq:3-management
+    container_name: team09-hyper-vibe-hacktron-mq
+    restart: unless-stopped
     ports:
-      - "1900:8000"
+      - "1901:5672"
+      - "1902:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=password123
+      - TZ=Asia/Bangkok
+    networks:
+      - ai4thai_net
+
+  hacktron-example-producer:
+    build:
+      context: ./producer
+      dockerfile: Dockerfile
+    container_name: team09-hyper-vibe-hacktron-producer
+    restart: unless-stopped
+    ports:
+      - "1903:8000"
+    environment:
+      - RABBITMQ_HOST=hacktron-example-mq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=password123
+      - TZ=Asia/Bangkok
+    depends_on:
+      - hacktron-example-mq
+    networks:
+      - ai4thai_net
+
+  hacktron-example-consumer:
+    build:
+      context: ./consumer
+      dockerfile: Dockerfile
+    container_name: team09-hyper-vibe-hacktron-consumer
+    restart: unless-stopped
+    environment:
+      - RABBITMQ_HOST=hacktron-example-mq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=password123
+      - TZ=Asia/Bangkok
+    depends_on:
+      - hacktron-example-mq
+    networks:
+      - ai4thai_net
 
 networks:
   ai4thai_net:
