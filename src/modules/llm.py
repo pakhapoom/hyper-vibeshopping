@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import asyncio
 from aift import setting
 from aift.nlp import text_sum
 from aift.multimodal import textqa
@@ -83,15 +84,32 @@ Summary:
 }
 
 
-def translate(user_input: str) -> str:
-    res = th2en.translate(user_input)
+async def translate(user_input: str) -> str:
+    loop = asyncio.get_running_loop()
+    res = await loop.run_in_executor(
+        None,  # Use the default thread pool executor
+        th2en.translate,
+        user_input
+    )
     return res["translated_text"]
 
-def generate(prompt: str) -> str:
-    return textqa.generate(prompt)["content"]
+async def generate(prompt: str) -> str:
+    loop = asyncio.get_running_loop()
+    res = await loop.run_in_executor(
+        None,
+        textqa.generate,
+        prompt
+    )
+    return res["content"]
 
-def summarize(context: str) -> str:
-    return text_sum.summarize(context)
+async def summarize(context: str) -> str:
+    loop = asyncio.get_running_loop()
+    res = await loop.run_in_executor(
+        None,
+        text_sum.summarize,
+        context
+    )
+    return res["content"]
 
 # class vLLMGenerator:
 #     def __init__(
@@ -123,30 +141,27 @@ class TransformersGenerator:
         )
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         
-    def generate(self, prompt: str) -> str:
-        # Use the chat template for better results with instruction-tuned models
-        messages = [
-            {"role": "user", "content": prompt}
-        ]
-        
+    def _generate_sync(self, prompt: str) -> str:
+        # This is the synchronous blocking part
+        messages = [{"role": "user", "content": prompt}]
         full_prompt = self.tokenizer.apply_chat_template(
             messages,
             tokenize=False,
             add_generation_prompt=True,
             enable_thinking=False,
         )
-        
         model_inputs = self.tokenizer([full_prompt], return_tensors="pt").to(self.device)
-
-        generated_ids = self.model.generate(
-            **model_inputs,
-            max_new_tokens=32768
-        )
-        
-        output_ids = generated_ids[0][len(model_inputs.input_ids[0]):].tolist() 
-        content =self.tokenizer.decode(output_ids, skip_special_tokens=True).strip("\n")
-
+        generated_ids = self.model.generate(**model_inputs, max_new_tokens=32768)
+        output_ids = generated_ids[0][len(model_inputs.input_ids[0]):].tolist()
+        content = self.tokenizer.decode(output_ids, skip_special_tokens=True).strip("\n")
         return content
+
+    async def generate(self, prompt: str) -> str:
+        # Asynchronous wrapper
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            None, self._generate_sync, prompt
+        )
 
 
 if __name__ == "__main__":

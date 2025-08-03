@@ -56,7 +56,7 @@ class multimodal_search_service:
             return "Thai"
 
 
-    def check_language(self, user_input: str) -> str:
+    async def check_language(self, user_input: str) -> str:
         """
         Detect the language of the input text.
 
@@ -67,12 +67,12 @@ class multimodal_search_service:
             str: "Thai" or "English" based on the detected language.
         """
         try:
-            return generate(prompt_template["detect"].format(user_input=user_input))
+            return await generate(prompt_template["detect"].format(user_input=user_input))
         except:
             return self._check(user_input)
     
 
-    def process_text(self, user_input: str) -> str:
+    async def process_text(self, user_input: str) -> str:
         """
         Main method to handle text processing before RAG.
 
@@ -82,19 +82,19 @@ class multimodal_search_service:
         Returns:
             str: Clean text to send to LLM.
         """
-        language = self.check_language(user_input)
+        language = await self.check_language(user_input)
         logger.info(f"Detected language: {language}")
 
         if language == "Thai":
             logger.info("Translating Thai text to English...")
-            translated_text = translate(user_input)
+            translated_text = await translate(user_input)
             logger.info(f"Translated text: {translated_text}")
             return translated_text
         else:
             return user_input
     
 
-    def rewrite_query(
+    async def rewrite_query(
         self,
         user_input: str,
         caption: str,
@@ -102,14 +102,14 @@ class multimodal_search_service:
     ):
         customer_data = get_purchase_history(cust_info)
         if self.user_transformer:
-            rewrite = self.transformer_generator.generate(
+            rewrite = await self.transformer_generator.generate(
                 prompt_template["rewrite"].format(
                 user_input=user_input,
                 item_description=caption,
                 customer_data=customer_data,
             ))
         else:
-            rewrite = generate(
+            rewrite = await generate(
                 prompt_template["rewrite"].format(
                 user_input=user_input,
                 item_description=caption,
@@ -118,13 +118,13 @@ class multimodal_search_service:
         return rewrite
     
 
-    def generate_answer(self, rewrite:str, context: str) -> str:
+    async def generate_answer(self, rewrite:str, context: str) -> str:
         if self.user_transformer:
-            summary = self.transformer_generator.generate(
+            summary = await self.transformer_generator.generate(
                 prompt_template["summarize"].format(rewrite=rewrite,context=context)
             )
         else:
-            summary = summarize(context)
+            summary = await summarize(context)
         return summary
 
 
@@ -139,7 +139,7 @@ class multimodal_search_service:
         and using it to query the vector database.
         """
         logger.info("Step 0: Preparing user input.")
-        user_input = self.process_text(user_input)
+        user_input = await self.process_text(user_input)
 
         try:
             logger.info("Step 1: Getting the uploaded image.")
@@ -158,7 +158,7 @@ class multimodal_search_service:
             
             logger.info("Step 3: Rewriting query based on caption and user input.")
             cust_info = DataFrame(cust_info) if not isinstance(cust_info, DataFrame) else cust_info
-            rewrite = self.rewrite_query(
+            rewrite = await self.rewrite_query(
                 user_input=user_input,
                 caption=caption,
                 cust_info=cust_info,
@@ -183,7 +183,7 @@ class multimodal_search_service:
                 context += f"  - Item description: {doc}\n"
             
             logger.info("Step 6: Generating final answer based on rewritten query and context.")
-            summary = self.generate_answer(rewrite,context)
+            summary = await self.generate_answer(rewrite,context)
 
             return retrieved_results, summary
 

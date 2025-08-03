@@ -12,11 +12,21 @@ PROCESSOR = None
 MODEL = None
 try:
     logger.info("Loading BLIP-2 model and processor into memory...")
+    
+    # --- 4-bit Quantization Configuration ---
+    quantization_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.float16
+    )
+    
     PROCESSOR = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b", use_fast=True)
     MODEL = Blip2ForConditionalGeneration.from_pretrained(
-        "Salesforce/blip2-opt-2.7b", device_map="auto", torch_dtype=torch.float16,
+        "Salesforce/blip2-opt-2.7b",
+        device_map="auto",
+        quantization_config=quantization_config, # Apply the quantization config
     )
-    logger.info("BLIP-2 model and processor loaded successfully.")
+    logger.info("BLIP-2 model and processor loaded successfully with 4-bit quantization.")
 except Exception as e:
     logger.error(f"Fatal error: Could not load the BLIP-2 model. {e}")
 

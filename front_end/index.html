@@ -318,12 +318,10 @@
                 }
 
                 const chatData = await chatResponse.json();
-                const results = (chatData.results && chatData.results.metadatas && chatData.results.metadatas[0])
-                    ? chatData.results.metadatas[0].map((meta, i) => ({
-                        metadata: meta,
-                        document: chatData.results.documents[0][i]
-                      }))
-                    : [];
+                const results = chatData.results || [];
+                
+                //console.log('Received results:', results); // This will print the results to the console
+
                 addBotMessage(chatData.summary, results);
 
             } catch (error) {
@@ -371,9 +369,14 @@
                     resultItem.className = 'result-item';
                     
                     const metadata = item.metadata || {};
-                    const imageUrl = metadata.image_url || 'https://via.placeholder.com/150';
+                    let imageUrl;
+                    if (metadata.image_string) {
+                        imageUrl = `data:image/jpeg;base64,${metadata.image_string}`;
+                    } else {
+                        imageUrl = metadata.image_url || 'https://via.placeholder.com/150';
+                    }
                     const name = metadata.name || 'Unknown Item';
-                    const price = metadata.price ? `$${metadata.price}` : 'Price not available';
+                    const price = metadata.price ? `${metadata.price}` : 'Price not available';
                     
                     resultItem.innerHTML = `
                         <img src="${imageUrl}" alt="${name}">
