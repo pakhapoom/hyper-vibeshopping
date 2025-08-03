@@ -3,6 +3,7 @@ import logging
 from typing import Dict, Optional, Text
 from PIL import Image
 import io
+import re
 import base64
 from pandas import DataFrame
 from src.modules.image_caption import generate_caption
@@ -46,6 +47,15 @@ class multimodal_search_service:
             logger.info("Using transformer for text generation.")
             self.transformer_generator = TransformersGenerator()
 
+
+    @staticmethod
+    def _check(text: str) -> str:
+        if re.search(r'[a-zA-Z]', text):
+            return "English"
+        else:
+            return "Thai"
+
+
     def check_language(self, user_input: str) -> str:
         """
         Detect the language of the input text.
@@ -56,8 +66,10 @@ class multimodal_search_service:
         Returns:
             str: "Thai" or "English" based on the detected language.
         """
-        # return generate(prompt_template["detect"].format(user_input=user_input))
-        return "English"
+        try:
+            return generate(prompt_template["detect"].format(user_input=user_input))
+        except:
+            return self._check(user_input)
     
 
     def process_text(self, user_input: str) -> str:
