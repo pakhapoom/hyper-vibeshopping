@@ -22,7 +22,7 @@ services:
     container_name: team09-hyper-vibe-hacktron-producer
     restart: unless-stopped
     ports:
-      - "1903:8000"
+      - "1900:8000"
     environment:
       - RABBITMQ_HOST=hacktron-example-mq
       - RABBITMQ_PORT=5672
