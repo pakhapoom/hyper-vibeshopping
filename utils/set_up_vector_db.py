@@ -58,7 +58,7 @@ def set_up_vector_db(chroma_db_path, collection_name, json_file_path):
         metadatas.append({
             'name': item['name'],
             'price': item['price'],
-            'image_string': item['image_string']
+            'image_url': item['imageUrl']  # Assuming 'imageUrl' is the correct key
         })
         ids.append(f"product_{i}")
     

@@ -285,86 +285,48 @@
             addUserMessage(userText, imageSrcForMessage);
             userInput.value = '';
 
-            // Add loading state
-            const loadingMessage = addBotMessage("Processing your request...");
-            const sendButton = chatForm.querySelector('button[type="submit"]');
-            sendButton.disabled = true;
-            sendButton.textContent = 'Processing...';
-
             try {
                 // Step 1: Upload image if it exists
                 if (uploadedImageFile) {
                     const formData = new FormData();
                     formData.append('image', uploadedImageFile);
-                    
-                    // Add timeout for upload
-                    const uploadController = new AbortController();
-                    const uploadTimeoutId = setTimeout(() => uploadController.abort(), 30000); // 30 seconds
-                    
                     const uploadResponse = await fetch(`${API_BASE_URL}/upload`, {
                         method: 'POST',
                         body: formData,
-                        signal: uploadController.signal
                     });
-                    clearTimeout(uploadTimeoutId);
-                    
                     if (!uploadResponse.ok) {
                         throw new Error('Image upload failed');
                     }
                 }
 
-                // Step 2: Call chat endpoint with timeout
+                // Step 2: Call chat endpoint
                 const chatPayload = {
                     user_input: userText || "Describe this image and find similar products.",
                     cust_info: custInfo,
-                    top_k: 5
+                    top_k: 2
                 };
-
-                const chatController = new AbortController();
-                const chatTimeoutId = setTimeout(() => chatController.abort(), 60000); // 60 seconds
 
                 const chatResponse = await fetch(`${API_BASE_URL}/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(chatPayload),
-                    signal: chatController.signal
                 });
-                clearTimeout(chatTimeoutId);
 
                 if (!chatResponse.ok) {
                     const errorData = await chatResponse.json();
                     throw new Error(errorData.detail || 'Failed to get chat response');
                 }
 
-                // Remove loading message
-                loadingMessage.remove();
-
                 const chatData = await chatResponse.json();
-                const results = chatData.results 
-                    ? chatData.results.map(result => ({
-                        id: result.id,
-                        distance: result.distance,
-                        metadata: result.metadata
-                      }))
-                    : [];
+                const results = chatData.results || [];
+                
+                console.log('Received results:', results); // This will print the results to the console
+
                 addBotMessage(chatData.summary, results);
 
             } catch (error) {
-                // Remove loading message
-                if (loadingMessage && loadingMessage.parentNode) {
-                    loadingMessage.remove();
-                }
-                
-                if (error.name === 'AbortError') {
-                    addBotMessage(`Request timed out. Please try again with a shorter query or smaller image.`);
-                } else {
-                    addBotMessage(`Sorry, an error occurred: ${error.message}`);
-                }
+                addBotMessage(`Sorry, an error occurred: ${error.message}`);
             } finally {
-                // Reset button state
-                sendButton.disabled = false;
-                sendButton.textContent = 'Send';
-                
                 // Reset image upload after sending
                 uploadedImageFile = null;
                 imageUpload.value = '';
@@ -407,19 +369,17 @@
                     resultItem.className = 'result-item';
                     
                     const metadata = item.metadata || {};
-                    
-                    // Handle image_string (base64 bytes) or fallback to placeholder
-                    let imageUrl = 'https://via.placeholder.com/150';
+                    let imageUrl;
                     if (metadata.image_string) {
-                        // Convert byte string to base64 data URL
                         imageUrl = `data:image/jpeg;base64,${metadata.image_string}`;
+                    } else {
+                        imageUrl = metadata.image_url || 'https://via.placeholder.com/150';
                     }
-                    
                     const name = metadata.name || 'Unknown Item';
-                    const price = metadata.price || 'Price not available';
+                    const price = metadata.price ? `${metadata.price}` : 'Price not available';
                     
                     resultItem.innerHTML = `
-                        <img src="${imageUrl}" alt="${name}" onerror="this.src='https://via.placeholder.com/150'">
+                        <img src="${imageUrl}" alt="${name}">
                         <p>${name}</p>
                         <p><strong>${price}</strong></p>
                     `;
