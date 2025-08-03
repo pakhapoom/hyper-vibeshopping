@@ -133,7 +133,7 @@ class TransformersGenerator:
         self, 
         model_name: str = "Qwen/Qwen3-0.6B",
     ):
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = "cuda"
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name,
             torch_dtype="auto",

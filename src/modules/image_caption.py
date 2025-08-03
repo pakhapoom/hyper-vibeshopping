@@ -13,9 +13,10 @@ MODEL = None
 try:
     logger.info("Loading BLIP-2 model and processor into memory...")
     
+    device = "cuda" 
     PROCESSOR = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b", use_fast=True)
     MODEL = Blip2ForConditionalGeneration.from_pretrained(
-        "Salesforce/blip2-opt-2.7b", device_map="cuda", torch_dtype=torch.float16,
+        "Salesforce/blip2-opt-2.7b", device_map=device, torch_dtype=torch.float16,
         
     )
     logger.info("BLIP-2 model and processor loaded successfully.")

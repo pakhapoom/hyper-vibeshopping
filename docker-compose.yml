@@ -33,6 +33,13 @@ services:
       - hacktron-example-mq
     networks:
       - ai4thai_net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
 
   hacktron-example-consumer:
     build:

@@ -1,4 +1,5 @@
-FROM python:3.11-slim 
+FROM nvcr.io/nvidia/cuda:12.1.1-base-ubuntu22.04
+
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
