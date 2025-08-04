@@ -165,12 +165,10 @@ class multimodal_search_service:
             
             logger.info("Step 3: Rewriting query based on caption and user input.")
             cust_info = DataFrame(cust_info) if not isinstance(cust_info, DataFrame) else cust_info
-            customer_id = cust_info["customer_id"].iloc[0]
             rewrite = await self.rewrite_query(
                 user_input=user_input,
                 caption=caption,
                 cust_info=cust_info,
-                example=rewrite_examples[customer_id],
             )
 
             logger.info(f"Step 4: Retrieving top {top_k} documents based on caption.")
