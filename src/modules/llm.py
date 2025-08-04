@@ -14,6 +14,114 @@ aift_token = os.getenv("AIFT_TOKEN")
 setting.set_api_key(aift_token)
 
 
+rewrite_examples = {
+    # tam
+    1: """Input: I'm a bit bored with my style. What should I buy?
+Product Description: "A white T-shirt with the text 'AI for Thai Hackathon 2025'"
+Customer Data: # Customer Information
+- Gender: M
+- Age: 25
+- Occupation: ai scientist
+- Address: bangkok
+
+# Purchase History (The most recent 5 purchases)
+- Men's Grey Slim-Fit Track Pants
+- Intel Hackathon 2022 Hoodie Coder Tee  Midnight Black
+- Men's Black Zip-Up Hoodie with Paris Print
+- Yellow Collared Blouse
+- Hack Day Matrix Tee  Black & White
+Rewritten Query: I'm a 25-year-old male AI scientist from Bangkok looking to refresh my style. I'm interested in tech-themed, casual clothing with unique prints or event references. Show me something like a white T-shirt with 'AI for Thai Hackathon 2025' on it.
+
+
+Input: Please recommend clothes similar to this.
+Product Description: "A white T-shirt with the text 'AI for Thai Hackathon 2025'"
+Customer Data: # Customer Information
+- Gender: M
+- Age: 25
+- Occupation: ai scientist
+- Address: bangkok
+
+# Purchase History (The most recent 5 purchases)
+- Men's Grey Slim-Fit Track Pants
+- Intel Hackathon 2022 Hoodie Coder Tee  Midnight Black
+- Men's Black Zip-Up Hoodie with Paris Print
+- Yellow Collared Blouse
+- Hack Day Matrix Tee  Black & White
+Rewritten Query: Looking for men's casual clothing similar to a white T-shirt with the text "AI for Thai Hackathon 2025"—preferably tech-themed or hackathon-inspired graphic tees. Customer is a 25-year-old male AI scientist from Bangkok with a preference for slim-fit, dark-toned, and tech-related apparel.
+""",
+
+    # oui
+    2: """Input: I'm a bit bored with my style. What should I buy?
+Product Description: ""
+Customer Data: # Customer Information
+- Gender: M
+- Age: 32
+- Occupation: businessman
+- Address: rayong
+
+# Purchase History (The most recent 5 purchases)
+- Shoreline Linen Wedding Suit  Sand Beige
+- Men's White Stand-Collar Linen Shirt
+- Men's Brown Loafer Shoes with Buckle Detail
+- Men's Navy Blue Pleated Trousers
+- Regatta Crest Beach Blazer Set  Navy & White
+Rewritten Query: I'm a 32-year-old male businessman from Rayong looking to refresh my style. I'm interested in sophisticated, elegant menswear with a preference for linen, neutral tones, and smart-casual or semi-formal outfits. Recommend stylish clothing that fits this aesthetic..
+
+
+Input: Please recommend clothes similar to this.
+Product Description: "A white T-shirt with the text 'AI for Thai Hackathon 2025'"
+Customer Data: # Customer Information
+- Gender: M
+- Age: 32
+- Occupation: businessman
+- Address: rayong
+
+# Purchase History (The most recent 5 purchases)
+- Shoreline Linen Wedding Suit  Sand Beige
+- Men's White Stand-Collar Linen Shirt
+- Men's Brown Loafer Shoes with Buckle Detail
+- Men's Navy Blue Pleated Trousers
+- Regatta Crest Beach Blazer Set  Navy & White
+Rewritten Query: Please recommend clothes similar to the white T-shirt with the text 'AI for Thai Hackathon 2025', considering the customer's preferences for casual and comfortable clothing suitable for a businessman in Rayong, who has previously purchased items like linen suits and shirts.
+""",
+
+    # ying
+    3: """Input: I'm a bit bored with my style. What should I buy?
+Product Description: ""
+Customer Data: # Customer Information
+- Gender: F
+- Age: 23
+- Occupation: dentist
+- Address: chaingmai
+
+# Purchase History (The most recent 5 purchases)
+- White Sheer Overlay Jacket
+- Sunny Yellow Linen Shirt
+- Olive Green Baggy Cargo Pants
+- Light Blue Casual T-shirt
+- Pink Ribbed Polo Mini Dress
+Rewritten Query: I'm a 23-year-old female dentist from Chiang Mai looking to refresh my skirt with stylish, colorful, and casual pieces similar to a white sheer jacket, yellow linen shirt, or pink mini dress. What new fashion items would suit me?
+
+
+Input: Please recommend clothes similar to this.
+Product Description: "A white T-shirt with the text 'AI for Thai Hackathon 2025'"
+Customer Data: # Customer Information
+- Gender: F
+- Age: 23
+- Occupation: dentist
+- Address: chaingmai
+
+# Purchase History (The most recent 5 purchases)
+- White Sheer Overlay Jacket
+- Sunny Yellow Linen Shirt
+- Olive Green Baggy Cargo Pants
+- Light Blue Casual T-shirt
+- Pink Ribbed Polo Mini Dress
+Rewritten Query: Looking for women's casual tops similar to a white T-shirt with text print, preferably in light or pastel colors, suitable for a 23-year-old female dentist from Chiang Mai with a preference for stylish and comfortable clothing.
+"""
+}
+
+
 prompt_template = {
     "detect": """Please analyze the following input text and determine whether it is written in Thai or English. Respond with only "Thai" or "English" based on your detection.
 
@@ -38,21 +146,7 @@ Translation:
 Respond with the rewritten query only, without any additional explanations or comments.
 
 # Example
-Input: Please recommend clothes like the ones in the picture
-Product Description: "A white T-shirt with the text 'AI for Thai Hackathon 2025'"
-Customer Data: # Customer Information
-- Gender: M
-- Age: 32
-- Occupation: businessman
-- Address: rayong
-
-# Purchase History (The most recent 5 purchases)
-- Hack Day Matrix Tee  Black & White
-- Hack Life Tri-Blend Tee  Violet Burst
-- Impact Hackathon Tech Tee  Circuit Black
-- Intel Hackathon 2022 Hoodie Coder Tee  Midnight Black
-- Tidewhite Relaxed Linen Set  Classic White:
-Rewritten Query: Please recommend clothes similar to the white T-shirt with the text 'AI for Thai Hackathon 2025', considering the customer's preferences for casual and comfortable clothing suitable for a businessman in Rayong, who has previously purchased items like linen suits and shirts.
+{example}
 
 Input: {user_input}
 Product Description: {item_description}
@@ -86,13 +180,21 @@ Summary:
 
 
 async def translate(user_input: str) -> str:
-    loop = asyncio.get_running_loop()
-    res = await loop.run_in_executor(
-        None,  # Use the default thread pool executor
-        th2en.translate,
-        user_input
-    )
-    return res["translated_text"]
+    try:
+        loop = asyncio.get_running_loop()
+        res = await loop.run_in_executor(
+            None,  # Use the default thread pool executor
+            th2en.translate,
+            user_input
+        )
+        return res["translated_text"]
+    
+    except:
+        transformers_generator = TransformersGenerator()
+        res = transformers_generator.generate(prompt_template["translate"].format(
+            user_input=user_input,
+        ))
+        return res
 
 async def generate(prompt: str) -> str:
     loop = asyncio.get_running_loop()
@@ -167,7 +269,8 @@ class TransformersGenerator:
 
 if __name__ == "__main__":
 
-    test_module = "detect"  # Options: detect, translate, rewrite, summarize, rewrite_tfm, summarize_tfm
+    test_module = "rewrite_tfm"  # Options: detect, translate, rewrite, summarize, rewrite_tfm, summarize_tfm
+    customer_id = 1
 
     # inputs
     user_input = "ช่วยแนะนำเสื้อผ้าเหมือนในรูปให้หน่อย"
@@ -217,6 +320,7 @@ if __name__ == "__main__":
             user_input=user_input,
             item_description=item_description,
             customer_data=customer_data,
+            example=rewrite_examples[customer_id],
         )))
 
     elif test_module == "summarize":
@@ -230,6 +334,7 @@ if __name__ == "__main__":
             user_input=user_input,
             item_description=item_description,
             customer_data=customer_data,
+            example=rewrite_examples[customer_id],
         )))
 
     elif test_module== "summarize_tfm":
