@@ -102,12 +102,14 @@ class multimodal_search_service:
         cust_info: DataFrame,
     ):
         customer_data = get_purchase_history(cust_info)
+        customer_id = cust_info["customer_id"].iloc[0]
         if self.user_transformer:
             rewrite = await self.transformer_generator.generate(
                 prompt_template["rewrite"].format(
                 user_input=user_input,
                 item_description=caption,
                 customer_data=customer_data,
+                example=rewrite_examples[customer_id],
             ))
         else:
             rewrite = await generate(
@@ -115,6 +117,7 @@ class multimodal_search_service:
                 user_input=user_input,
                 item_description=caption,
                 customer_data=customer_data,
+                example=rewrite_examples[customer_id],
             ))
         return rewrite
     
