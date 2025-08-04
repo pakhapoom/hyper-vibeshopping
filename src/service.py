@@ -102,7 +102,7 @@ class multimodal_search_service:
         cust_info: DataFrame,
     ):
         customer_data = get_purchase_history(cust_info)
-        customer_id = cust_info["customer_id"].iloc[0]
+        customer_id = int(cust_info["customer_id"].iloc[0])
         if self.user_transformer:
             rewrite = await self.transformer_generator.generate(
                 prompt_template["rewrite"].format(
